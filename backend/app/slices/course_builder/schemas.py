@@ -8,11 +8,13 @@ class CourseCreate(BaseModel):
     title: str = Field(min_length=1, max_length=255)
     slug: str = Field(min_length=1, max_length=120)
     description: str = ""
+    cover_url: str | None = None
 
 
 class CourseUpdate(BaseModel):
     title: str | None = None
     description: str | None = None
+    cover_url: str | None = None
 
 
 class CourseOut(BaseModel):
@@ -20,6 +22,7 @@ class CourseOut(BaseModel):
     slug: str
     title: str
     description: str
+    cover_url: str | None = None
     status: str
 
 

@@ -14,24 +14,32 @@ pip install -r requirements.txt
 cp .env.example .env
 
 alembic upgrade head
-PYTHONPATH=. python -m app.seed.run
+PYTHONPATH=. python -m app.seed.run --force
 
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-Postgres в Docker слушает **5433** (чтобы не конфликтовать с локальным 5432).
+Postgres в Docker: порт **5433**.
 
 - API: http://localhost:8000  
 - Swagger: http://localhost:8000/docs  
-- Health: http://localhost:8000/health  
+- Uploads: http://localhost:8000/uploads/...  
 
-## Демо-логины
+Локальная шпаргалка по данным БД (в gitignore): `backend/DATA.md`.
 
-| email | password | role |
-|-------|----------|------|
-| admin@example.com | demo1234 | admin |
-| curator@example.com | demo1234 | curator |
-| student@example.com | demo1234 | student |
+## Демо-логины (password `demo1234`)
+
+| email | role |
+|-------|------|
+| admin@example.com | admin |
+| curator@example.com | curator |
+| student@example.com | student |
+| ivan@example.com | student |
+
+## Курсы в seed
+
+`python-setup` · `python-first-steps` · `codeolymp-start` · `algo-intro`  
+У курсов есть `cover_url`; админ может загрузить обложку: `POST /api/v1/admin/courses/{id}/cover`.
 
 ## Срезы
 

@@ -7,6 +7,7 @@ from app.core.database import get_db
 from app.core.deps import require_roles
 from app.models.course import Lesson, Module, Step
 from app.models.user import User, UserRole
+from app.slices.course_builder.uploads import router as uploads_router
 from app.slices.course_builder import service
 from app.slices.course_builder.schemas import (
     CourseCreate,
@@ -121,3 +122,6 @@ def assign_curator(
     _: User = Depends(admin_dep),
 ) -> dict:
     return service.assign_curator(db, course_id, body.user_id)
+
+
+router.include_router(uploads_router)

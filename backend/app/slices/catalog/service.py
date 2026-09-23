@@ -55,6 +55,7 @@ def list_courses(db: Session, user: User, limit: int, offset: int) -> CatalogLis
                 slug=c.slug,
                 title=c.title,
                 description=c.description,
+                cover_url=c.cover_url,
                 status=c.status.value,
                 enrollment=brief,
             )
@@ -144,6 +145,8 @@ def outline(db: Session, user: User, course_id: uuid.UUID) -> OutlineOut:
             "title": course.title,
             "slug": course.slug,
             "status": course.status.value,
+            "cover_url": course.cover_url,
+            "description": course.description,
         },
         modules=modules_out,
     )

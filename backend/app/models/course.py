@@ -29,6 +29,7 @@ class Course(Base):
     slug: Mapped[str] = mapped_column(String(120), unique=True, index=True, nullable=False)
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[str] = mapped_column(Text, default="", nullable=False)
+    cover_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
     status: Mapped[CourseStatus] = mapped_column(
         Enum(CourseStatus, name="course_status"), default=CourseStatus.draft, nullable=False
     )

@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 60 * 24
     cors_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
     algorithm: str = "HS256"
+    upload_dir: str = "uploads"
 
     @property
     def cors_origin_list(self) -> list[str]:

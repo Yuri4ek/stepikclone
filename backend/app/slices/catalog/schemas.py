@@ -16,6 +16,7 @@ class CatalogCourseItem(BaseModel):
     slug: str
     title: str
     description: str
+    cover_url: str | None = None
     status: str
     enrollment: EnrollmentBrief | None
 

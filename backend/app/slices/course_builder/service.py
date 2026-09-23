@@ -24,7 +24,12 @@ from app.slices.course_builder.schemas import (
 
 def _course_out(c: Course) -> CourseOut:
     return CourseOut(
-        id=c.id, slug=c.slug, title=c.title, description=c.description, status=c.status.value
+        id=c.id,
+        slug=c.slug,
+        title=c.title,
+        description=c.description,
+        cover_url=c.cover_url,
+        status=c.status.value,
     )
 
 
@@ -40,6 +45,7 @@ def create_course(db: Session, data: CourseCreate, admin: User) -> CourseOut:
         title=data.title,
         slug=data.slug,
         description=data.description,
+        cover_url=data.cover_url,
         created_by=admin.id,
         status=CourseStatus.draft,
     )
@@ -80,6 +86,7 @@ def get_course_tree(db: Session, course_id: uuid.UUID) -> dict:
         "slug": course.slug,
         "title": course.title,
         "description": course.description,
+        "cover_url": course.cover_url,
         "status": course.status.value,
         "modules": modules,
     }
@@ -93,6 +100,8 @@ def update_course(db: Session, course_id: uuid.UUID, data: CourseUpdate) -> Cour
         course.title = data.title
     if data.description is not None:
         course.description = data.description
+    if data.cover_url is not None:
+        course.cover_url = data.cover_url
     db.commit()
     db.refresh(course)
     return _course_out(course)
