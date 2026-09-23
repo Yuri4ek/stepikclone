@@ -55,7 +55,7 @@ def course_specs(cover_urls: dict[str, str]) -> list[dict]:
                                         "3. На Windows отметьте **Add Python to PATH**.\n"
                                         "4. В терминале выполните `python --version` или `python3 --version`.\n\n"
                                         "Нужна версия **3.10+**.",
-                                        images=[{"url": cover_urls["python-setup"], "alt": "Обложка: Python"}],
+                                        images=[{"url": cover_urls["python-setup"], "alt": "Minecraft Education — обучение"}],
                                     ),
                                 },
                                 {
@@ -96,7 +96,8 @@ def course_specs(cover_urls: dict[str, str]) -> list[dict]:
                                         "2. Создайте проект (New Project) и укажите интерпретатор Python.\n"
                                         "3. Создайте файл `main.py` и напишите `print(\"Hello\")`.\n"
                                         "4. Запустите файл (Run).\n\n"
-                                        "Альтернативы: VS Code + расширение Python, Cursor."
+                                        "Альтернативы: VS Code + расширение Python, Cursor.",
+                                        images=[{"url": cover_urls["python-setup"], "alt": "Среда обучения"}],
                                     ),
                                 },
                                 {
@@ -347,7 +348,8 @@ def course_specs(cover_urls: dict[str, str]) -> list[dict]:
                                         "На олимпиадах важны:\n"
                                         "- правильность;\n"
                                         "- скорость (часто O(n) или O(n log n));\n"
-                                        "- аккуратный ввод-вывод."
+                                        "- аккуратный ввод-вывод.",
+                                        images=[{"url": cover_urls["algo-intro"], "alt": "Таблица элементов в Minecraft"}],
                                     ),
                                 },
                                 {

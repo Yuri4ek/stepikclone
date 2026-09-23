@@ -31,6 +31,11 @@ class ModuleCreate(BaseModel):
     position: int = 1
 
 
+class ModuleUpdate(BaseModel):
+    title: str | None = None
+    position: int | None = None
+
+
 class ModuleOut(BaseModel):
     id: UUID
     course_id: UUID
@@ -41,6 +46,11 @@ class ModuleOut(BaseModel):
 class LessonCreate(BaseModel):
     title: str
     position: int = 1
+
+
+class LessonUpdate(BaseModel):
+    title: str | None = None
+    position: int | None = None
 
 
 class LessonOut(BaseModel):

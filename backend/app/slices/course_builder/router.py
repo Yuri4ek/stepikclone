@@ -1,6 +1,7 @@
 import uuid
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -16,8 +17,10 @@ from app.slices.course_builder.schemas import (
     CuratorAssign,
     LessonCreate,
     LessonOut,
+    LessonUpdate,
     ModuleCreate,
     ModuleOut,
+    ModuleUpdate,
     StepCreate,
     StepOut,
     StepUpdate,
@@ -25,6 +28,26 @@ from app.slices.course_builder.schemas import (
 
 router = APIRouter()
 admin_dep = require_roles(UserRole.admin)
+
+
+@router.get("/users")
+def list_users(
+    role: str | None = None,
+    db: Session = Depends(get_db),
+    _: User = Depends(admin_dep),
+) -> list[dict]:
+    q = select(User).order_by(User.full_name)
+    if role:
+        try:
+            role_enum = UserRole(role)
+        except ValueError as exc:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid role") from exc
+        q = q.where(User.role == role_enum)
+    rows = db.scalars(q).all()
+    return [
+        {"id": u.id, "email": u.email, "full_name": u.full_name, "role": u.role.value}
+        for u in rows
+    ]
 
 
 @router.get("/courses", response_model=list[CourseOut])
@@ -69,6 +92,16 @@ def create_module(
     return service.add_module(db, course_id, body)
 
 
+@router.patch("/modules/{module_id}", response_model=ModuleOut)
+def patch_module(
+    module_id: uuid.UUID,
+    body: ModuleUpdate,
+    db: Session = Depends(get_db),
+    _: User = Depends(admin_dep),
+) -> ModuleOut:
+    return service.update_module(db, module_id, body)
+
+
 @router.delete("/modules/{module_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_module(module_id: uuid.UUID, db: Session = Depends(get_db), _: User = Depends(admin_dep)) -> None:
     service.delete_entity(db, Module, module_id, "Module")
@@ -82,6 +115,16 @@ def create_lesson(
     _: User = Depends(admin_dep),
 ) -> LessonOut:
     return service.add_lesson(db, module_id, body)
+
+
+@router.patch("/lessons/{lesson_id}", response_model=LessonOut)
+def patch_lesson(
+    lesson_id: uuid.UUID,
+    body: LessonUpdate,
+    db: Session = Depends(get_db),
+    _: User = Depends(admin_dep),
+) -> LessonOut:
+    return service.update_lesson(db, lesson_id, body)
 
 
 @router.delete("/lessons/{lesson_id}", status_code=status.HTTP_204_NO_CONTENT)

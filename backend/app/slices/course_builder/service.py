@@ -14,8 +14,10 @@ from app.slices.course_builder.schemas import (
     CourseUpdate,
     LessonCreate,
     LessonOut,
+    LessonUpdate,
     ModuleCreate,
     ModuleOut,
+    ModuleUpdate,
     StepCreate,
     StepOut,
     StepUpdate,
@@ -127,11 +129,37 @@ def add_module(db: Session, course_id: uuid.UUID, data: ModuleCreate) -> ModuleO
     return ModuleOut(id=module.id, course_id=module.course_id, title=module.title, position=module.position)
 
 
+def update_module(db: Session, module_id: uuid.UUID, data: ModuleUpdate) -> ModuleOut:
+    module = db.get(Module, module_id)
+    if module is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Module not found")
+    if data.title is not None:
+        module.title = data.title
+    if data.position is not None:
+        module.position = data.position
+    db.commit()
+    db.refresh(module)
+    return ModuleOut(id=module.id, course_id=module.course_id, title=module.title, position=module.position)
+
+
 def add_lesson(db: Session, module_id: uuid.UUID, data: LessonCreate) -> LessonOut:
     if db.get(Module, module_id) is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Module not found")
     lesson = Lesson(module_id=module_id, title=data.title, position=data.position)
     db.add(lesson)
+    db.commit()
+    db.refresh(lesson)
+    return LessonOut(id=lesson.id, module_id=lesson.module_id, title=lesson.title, position=lesson.position)
+
+
+def update_lesson(db: Session, lesson_id: uuid.UUID, data: LessonUpdate) -> LessonOut:
+    lesson = db.get(Lesson, lesson_id)
+    if lesson is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Lesson not found")
+    if data.title is not None:
+        lesson.title = data.title
+    if data.position is not None:
+        lesson.position = data.position
     db.commit()
     db.refresh(lesson)
     return LessonOut(id=lesson.id, module_id=lesson.module_id, title=lesson.title, position=lesson.position)
