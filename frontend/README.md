@@ -1,32 +1,68 @@
-# React + TypeScript + Vite
+# КодСтарт — фронтенд
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Платформа дистанционной подготовки школьников 1–9 классов по спортивному программированию (по типу Stepik).
+React 19 + TypeScript + Vite + Tailwind CSS 4. Работает с бэкендом по контракту [`API.md`](../API.md).
 
-Currently, two official plugins are available:
+## Запуск
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```bash
+cd frontend
+npm install
+echo 'VITE_API_URL=http://localhost:8000' > .env   # адрес сервера API (файл не коммитится)
+npm run dev                  # http://localhost:5173
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+`VITE_API_URL` — адрес сервера API без `/api/v1` (по умолчанию `http://localhost:8000`). После изменения перезапустите `npm run dev`.
+Сборка: `npm run build` → статика в `dist/` (для SPA нужен fallback всех путей на `index.html`).
+
+Демо-входы (кнопки на странице входа, пароль `demo1234`): `student@`, `curator@`, `admin@example.com`.
+
+## Что сделано
+
+**Ученик**: каталог и запись на курс; дашборд с блоком «что делать дальше» по каждому курсу; оглавление курса со статусами шагов;
+плеер шага в стиле Stepik (полоска шагов урока, навигация); результат автопроверки сразу; статус ручной проверки и причина возврата;
+страница рейтинга с формулой и разбором по каждому заданию (автопроверка / куратор), «где потеряны баллы» и «что ещё можно заработать».
+
+**Куратор**: обзор (очередь, просроченные работы, отстающие), очередь проверки с фильтром по курсу, карточка работы
+(ответ в виде, зависящем от типа шага, критерии, оценка с быстрыми баллами, принять / вернуть с комментарием, переход к следующей работе),
+список отстающих с уровнем, днями без активности и местом остановки.
+
+**Администратор**: список курсов (вкл. черновики), создание курса, конструктор: модули → уроки → шаги, выбор типа шага,
+редактор под каждый тип, предпросмотр «глазами ученика», порядок шагов, удаление, публикация, назначение куратора.
+
+**Общие страницы**: лендинг для гостей, «Как это работает» (типы шагов, проверка, статусы, FAQ), профиль, «Мои работы»
+(история отправок со статусами и комментариями, засчитанные задания), страница 404.
+
+**Дизайн**: светлая тема в духе Material/Google — полупрозрачные карточки без рамок, сине-фиолетовые градиенты, шрифт Google Sans.
+
+### Расширяемые типы шагов
+
+Бэкенд знает 4 `kind` (`theory`, `quiz`, `task`, `code`) и хранит произвольный JSON в `content`.
+Тип шага на платформе = `content.type` + механизм проверки через `kind`. Каждый тип — отдельный модуль в `src/steps/`
+(редактор для админа, плеер для ученика, вид для куратора), список — в `src/steps/registry.ts`.
+
+| Тип | kind | Проверка |
+|---|---|---|
+| Теория (текст, код, видео) | theory | — |
+| Контрольный вопрос | quiz | авто, сразу |
+| Задача с ответом | quiz | авто, сразу |
+| Алгоритмика (Python / JS) | code | прогон по тестам в браузере сразу + подтверждение куратором |
+| Scratch (разбор проекта + ссылка на свой) | task | куратор |
+| Minecraft Education (код мира, чек-лист, отчёт) | task | куратор |
+| Проект / работа (текст, файл, ссылка) | task | куратор |
+
+Новый тип добавляется одним файлом и строкой в реестре — без изменения API и базы.
+
+Тесты для «Алгоритмики» выполняются в Web Worker (Python — через Pyodide из CDN), бесконечный цикл обрывается по таймауту.
+
+## Ограничения / не успели
+
+- Оглавление курса (`/outline`) не отдаёт `content`, поэтому ещё не открытые шаги Scratch/Minecraft показываются как общий
+  «Проект / работа»; после открытия шага тип запоминается.
+- «Задача с ответом» использует автопроверку quiz: правильный ответ лежит в `correct_option_id`, ответ ученика отправляется
+  как `selected_option_id`. Работает, если бэкенд сравнивает строки, а не проверяет вхождение в `options`.
+- Результат тестов «Алгоритмики» считается на клиенте; итоговый балл ставит куратор (на бэкенде `code` идёт в ручную очередь).
+- «Мои работы»: в API нет списка отправок ученика, поэтому их id хранятся в браузере, а статусы берутся с сервера;
+  засчитанные задания видны с любого устройства.
+- В API нет: вопросов ученика по шагу, списка пользователей, назначения учеников —
+  соответствующих экранов нет; куратор назначается по UUID пользователя.
