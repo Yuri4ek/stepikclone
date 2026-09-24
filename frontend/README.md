@@ -35,11 +35,29 @@ npm run dev                  # http://localhost:5173
 
 **Дизайн**: светлая тема в духе Material/Google — полупрозрачные карточки без рамок, сине-фиолетовые градиенты, шрифт Google Sans.
 
+## Архитектура — Feature-Sliced Design
+
+Код в `src/` разложен по слоям [FSD](https://feature-sliced.design). Слой может импортировать только из слоёв ниже,
+слайсы одного слоя друг друга не импортируют, импорт из чужого слайса — только через его `index.ts`. Алиас `@/` → `src/`.
+
+```
+app/        точка сборки: провайдеры, роутер и гарды доступа, глобальные стили
+pages/      страницы (по слайсу на экран): landing, auth, catalog, course, step, course-builder, review, lag, …
+widgets/    составные блоки: app-layout (шапка/подвал), course-card (карточка + запись), course-outline (оглавление)
+features/   действия пользователя: auth, enroll-course, step-answer, review-submission, filter-by-course,
+            create-course, manage-course, edit-course-structure, edit-step
+entities/   бизнес-сущности: session, user, course, step (реестр типов шагов), submission, lag
+shared/     без бизнес-логики: api (HTTP-клиент и типы контракта), ui (кит), lib (форматирование, useAsync, code-runner), config
+```
+
+Внутри слайса — сегменты `ui/`, `model/`, `api/`, `lib/`. Запросы к API лежат в сегменте `api` того слайса, которому принадлежат
+(например, чтение курса — `entities/course`, запись на курс — `features/enroll-course`).
+
 ### Расширяемые типы шагов
 
 Бэкенд знает 4 `kind` (`theory`, `quiz`, `task`, `code`) и хранит произвольный JSON в `content`.
-Тип шага на платформе = `content.type` + механизм проверки через `kind`. Каждый тип — отдельный модуль в `src/steps/`
-(редактор для админа, плеер для ученика, вид для куратора), список — в `src/steps/registry.ts`.
+Тип шага на платформе = `content.type` + механизм проверки через `kind`. Каждый тип — отдельный модуль в `src/entities/step/ui/step-types/`
+(редактор для админа, плеер для ученика, вид для куратора), список — в `src/entities/step/model/registry.ts`.
 
 | Тип | kind | Проверка |
 |---|---|---|
