@@ -38,6 +38,30 @@ function detailToMessage(detail: unknown, status: number): string {
   return `Ошибка ${status}`
 }
 
+// FastAPI сериализует Decimal строкой ("10.00"). Приводим числовые поля к number,
+// иначе ломаются formatScore/toFixed, суммы превращаются в склейку строк, а сравнения с 0 врут.
+const NUMERIC_KEYS = new Set(['percent', 'rating_score', 'max_score', 'score', 'best_score', 'progress_percent', 'total_score', 'total_max'])
+
+function normalizeNumbers(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(normalizeNumbers)
+  if (value && typeof value === 'object') {
+    const out: Record<string, unknown> = {}
+    for (const [k, v] of Object.entries(value)) {
+      if (NUMERIC_KEYS.has(k) && typeof v === 'string' && v.trim() !== '' && !Number.isNaN(Number(v))) out[k] = Number(v)
+      else out[k] = normalizeNumbers(v)
+    }
+    return out
+  }
+  return value
+}
+
+/** Абсолютный адрес файла с бэкенда (обложки, картинки шагов приходят как /uploads/...) */
+export function mediaUrl(path: string | null | undefined): string | null {
+  if (!path) return null
+  if (/^(https?:|data:|blob:)/.test(path)) return path
+  return API_HOST.replace(/\/+$/, '') + (path.startsWith('/') ? path : `/${path}`)
+}
+
 export async function request<T>(
   method: string,
   path: string,
@@ -70,6 +94,27 @@ export async function request<T>(
     if (res.status === 401 && token) onUnauthorized?.()
     const detail = (data as { detail?: unknown } | null)?.detail
     throw new ApiError(res.status, detailToMessage(detail, res.status))
+  }
+  return normalizeNumbers(data) as T
+}
+
+/** Загрузка файла (multipart/form-data, поле file) */
+export async function upload<T>(path: string, file: File): Promise<T> {
+  const form = new FormData()
+  form.append('file', file)
+  const headers: Record<string, string> = { Accept: 'application/json' }
+  const token = tokenStore.get()
+  if (token) headers.Authorization = `Bearer ${token}`
+  let res: Response
+  try {
+    res = await fetch(API_URL + path, { method: 'POST', headers, body: form })
+  } catch {
+    throw new ApiError(0, 'Сервер недоступен. Проверьте подключение.')
+  }
+  const data: unknown = await res.json().catch(() => null)
+  if (!res.ok) {
+    if (res.status === 401 && token) onUnauthorized?.()
+    throw new ApiError(res.status, detailToMessage((data as { detail?: unknown } | null)?.detail, res.status))
   }
   return data as T
 }

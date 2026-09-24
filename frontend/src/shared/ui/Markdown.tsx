@@ -1,6 +1,10 @@
-import ReactMarkdown from 'react-markdown'
+import ReactMarkdown, { defaultUrlTransform } from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import { mediaUrl } from '../api/client'
 import { cx } from '../lib/cx'
+
+// Картинки, загруженные на бэкенд, хранятся как /uploads/... — подставляем адрес API
+const urlTransform = (url: string) => defaultUrlTransform(url.startsWith('/uploads/') ? (mediaUrl(url) ?? url) : url)
 
 export function Markdown({ children, className }: { children: string; className?: string }) {
   if (!children.trim()) return null
@@ -11,7 +15,7 @@ export function Markdown({ children, className }: { children: string; className?
         className,
       )}
     >
-      <ReactMarkdown remarkPlugins={[remarkGfm]}>{children}</ReactMarkdown>
+      <ReactMarkdown remarkPlugins={[remarkGfm]} urlTransform={urlTransform}>{children}</ReactMarkdown>
     </div>
   )
 }

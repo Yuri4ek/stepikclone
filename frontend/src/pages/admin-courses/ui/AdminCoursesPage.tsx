@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { courseApi, courseCover, courseStatusMeta } from '@/entities/course'
+import { courseApi, courseCoverStyle, courseStatusMeta } from '@/entities/course'
 import { CreateCourseForm } from '@/features/create-course'
 import { useAsync } from '@/shared/lib'
 import { Badge, Button, Card, EmptyState, ErrorBox, Loader, PageHeader } from '@/shared/ui'
@@ -29,7 +29,7 @@ export function AdminCoursesPage() {
             {data.map((c) => (
               <Link key={c.id} to={`/admin/courses/${c.id}`}>
                 <Card className="h-full overflow-hidden transition-transform hover:-translate-y-1">
-                  <div className="m-2 h-20 rounded-[22px]" style={{ backgroundImage: courseCover(c.id) }} />
+                  <div className="m-2 h-20 rounded-[22px]" style={courseCoverStyle(c)} />
                   <div className="px-5 pt-2 pb-5">
                     <div className="flex items-start justify-between gap-2">
                       <h3 className="font-medium">{c.title}</h3>

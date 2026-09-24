@@ -1,7 +1,7 @@
 import { Link, useParams } from 'react-router-dom'
 import { courseApi, flattenOutline, sortOutline } from '@/entities/course'
 import { StepTypeIcon, resolveStepType } from '@/entities/step'
-import type { BreakdownItem } from '@/shared/api'
+import { ApiError, type BreakdownItem } from '@/shared/api'
 import { formatDate, formatPercent, formatScore, useAsync } from '@/shared/lib'
 import { Badge, ButtonLink, Card, EmptyState, ErrorBox, Loader, PageHeader, ProgressBar, ScorePill } from '@/shared/ui'
 
@@ -21,6 +21,16 @@ export function ProgressPage() {
   const { data, error, loading, reload } = useAsync(() => load(courseId), [courseId])
 
   if (loading && !data) return <Loader />
+  if (error instanceof ApiError && error.status === 404) {
+    return (
+      <EmptyState icon="📚" title="Вы не записаны на этот курс">
+        Прогресс и рейтинг появляются после записи на курс.{' '}
+        <Link to={`/courses/${courseId}`} className="text-brand">
+          Открыть программу курса
+        </Link>
+      </EmptyState>
+    )
+  }
   if (error) return <ErrorBox error={error} onRetry={reload} />
   if (!data) return null
 

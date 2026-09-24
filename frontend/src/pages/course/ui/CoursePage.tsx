@@ -102,7 +102,7 @@ export function CoursePage() {
                 <Card className="p-5" accent="#F59E0B">
                   <div className="font-medium">⏳ На проверке у куратора</div>
                   <p className="mt-1 text-sm text-content-secondary">
-                    {submitted.length} {plural(submitted.length, 'работа', 'работы', 'работ')}. Пока идёт проверка, можно проходить следующие шаги.
+                    {submitted.length} {plural(submitted.length, 'работа', 'работы', 'работ')}. Следующий шаг откроется, когда куратор примет работу.
                   </p>
                 </Card>
               )}

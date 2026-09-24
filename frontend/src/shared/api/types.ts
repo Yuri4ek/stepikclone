@@ -53,6 +53,7 @@ export interface CatalogCourse {
   slug: string
   title: string
   description: string
+  cover_url: string | null
   status: CourseStatus
   enrollment: EnrollmentShort | null
 }
@@ -89,7 +90,7 @@ export interface OutlineModule {
 }
 
 export interface Outline {
-  course: { id: string; title: string; slug: string; status: CourseStatus }
+  course: { id: string; title: string; slug: string; status: CourseStatus; cover_url: string | null; description: string }
   modules: OutlineModule[]
 }
 
@@ -204,7 +205,7 @@ export interface ReviewSubmission {
   status: SubmissionStatus
   payload: Answers
   step: { id: string; title: string; max_score: number; content: StepContent }
-  student: StudentShort
+  student: StudentShort | null
   created_at: string
 }
 
@@ -240,7 +241,15 @@ export interface CourseOut {
   slug: string
   title: string
   description: string
+  cover_url: string | null
   status: CourseStatus
+}
+
+export interface AdminUser {
+  id: string
+  email: string
+  full_name: string
+  role: Role
 }
 
 export interface AdminStep {

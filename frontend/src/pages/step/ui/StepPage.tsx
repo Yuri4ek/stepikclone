@@ -60,7 +60,7 @@ function ResultBanner({ step, type, last }: { step: LearningStep; type: StepType
     return (
       <Notice tone="warning">
         <div className="font-medium">⏳ Работа отправлена куратору</div>
-        <div className="mt-0.5">Проверка обычно занимает до суток. Пока можно переходить к следующим шагам — прогресс обновится после проверки.</div>
+        <div className="mt-0.5">Проверка обычно занимает до суток. Следующий шаг откроется, когда куратор примет работу, — прогресс обновится сразу после проверки.</div>
       </Notice>
     )
   }

@@ -11,13 +11,16 @@ export function formatDate(iso: string | null | undefined): string {
   return Number.isNaN(d.getTime()) ? '—' : dateFmt.format(d)
 }
 
-export function formatScore(n: number | null | undefined): string {
-  if (n === null || n === undefined) return '—'
-  return Number.isInteger(n) ? String(n) : n.toFixed(1)
+export function formatScore(n: number | string | null | undefined): string {
+  if (n === null || n === undefined || n === '') return '—'
+  const v = Number(n)
+  if (Number.isNaN(v)) return '—'
+  return Number.isInteger(v) ? String(v) : v.toFixed(1)
 }
 
-export function formatPercent(n: number | null | undefined): string {
-  return `${Math.round(n ?? 0)}%`
+export function formatPercent(n: number | string | null | undefined): string {
+  const v = Number(n ?? 0)
+  return `${Number.isNaN(v) ? 0 : Math.round(v)}%`
 }
 
 export function plural(n: number, one: string, few: string, many: string): string {

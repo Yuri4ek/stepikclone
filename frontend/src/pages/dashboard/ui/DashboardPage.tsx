@@ -1,4 +1,4 @@
-import { courseApi, courseCover } from '@/entities/course'
+import { courseApi, courseCoverStyle } from '@/entities/course'
 import { useUser } from '@/entities/session'
 import { StepTypeBadge, resolveStepType } from '@/entities/step'
 import { CatalogCourseCard } from '@/widgets/course-card'
@@ -29,7 +29,7 @@ function ContinueCard({ course, next }: MyCourse) {
   return (
     <Card className="overflow-hidden">
       <div className="flex flex-col sm:flex-row">
-        <div className="relative m-2 shrink-0 overflow-hidden rounded-[22px] p-6 text-white sm:w-60" style={{ backgroundImage: courseCover(course.id) }}>
+        <div className="relative m-2 shrink-0 overflow-hidden rounded-[22px] p-6 text-white sm:w-60" style={courseCoverStyle(course)}>
           <div className="absolute -right-10 -bottom-10 size-40 rounded-full bg-white/20 blur-2xl" aria-hidden />
           <div className="text-sm opacity-80">Курс</div>
           <div className="mt-1 text-lg leading-snug font-medium">{course.title}</div>

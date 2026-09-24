@@ -1,14 +1,18 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
+import { courseCoverStyle } from '@/entities/course'
 import type { AdminCourseTree } from '@/shared/api'
-import { Button, Card, Field, Input, Notice, Textarea } from '@/shared/ui'
+import { useAsync } from '@/shared/lib'
+import { Button, Card, Field, Input, Notice, Select, Textarea } from '@/shared/ui'
 import { manageCourseApi } from '../api/manageCourseApi'
 
-/** Настройки курса: название и описание, публикация, назначение куратора */
+/** Настройки курса: название и описание, обложка, публикация, назначение куратора */
 export function CourseSettings({ tree, onChanged }: { tree: AdminCourseTree; onChanged: () => Promise<void> }) {
   const [form, setForm] = useState({ title: tree.title, description: tree.description })
   const [busy, setBusy] = useState<string | null>(null)
   const [msg, setMsg] = useState<{ tone: 'success' | 'error'; text: string } | null>(null)
   const [curatorId, setCuratorId] = useState('')
+  const curators = useAsync(() => manageCourseApi.users('curator'), [])
+  const coverInput = useRef<HTMLInputElement>(null)
   const stepsCount = tree.modules.flatMap((m) => m.lessons.flatMap((l) => l.steps)).length
 
   const run = async (key: string, fn: () => Promise<unknown>, ok: string) => {
@@ -40,6 +44,30 @@ export function CourseSettings({ tree, onChanged }: { tree: AdminCourseTree; onC
         </Button>
       </Card>
 
+      <Card className="p-5">
+        <h2 className="font-medium">Обложка</h2>
+        <div className="mt-3 flex flex-wrap items-center gap-4">
+          <div className="h-24 w-44 shrink-0 rounded-[22px]" style={courseCoverStyle(tree)} aria-label="Текущая обложка" />
+          <div className="space-y-2">
+            <input
+              ref={coverInput}
+              type="file"
+              accept="image/png,image/jpeg,image/webp,image/gif"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0]
+                e.target.value = ''
+                if (file) void run('cover', () => manageCourseApi.uploadCover(tree.id, file), 'Обложка обновлена')
+              }}
+            />
+            <Button variant="secondary" loading={busy === 'cover'} onClick={() => coverInput.current?.click()}>
+              Загрузить картинку
+            </Button>
+            <p className="text-xs text-content-secondary">PNG, JPG, WEBP или GIF до 5 МБ. Без картинки используется градиент.</p>
+          </div>
+        </div>
+      </Card>
+
       <Card className="p-5" accent={tree.status === 'published' ? '#10B981' : '#64748B'}>
         <h2 className="font-medium">Публикация</h2>
         {tree.status === 'published' ? (
@@ -61,11 +89,18 @@ export function CourseSettings({ tree, onChanged }: { tree: AdminCourseTree; onC
           className="mt-3 flex gap-2"
           onSubmit={(e) => {
             e.preventDefault()
-            void run('curator', () => manageCourseApi.assignCurator(tree.id, curatorId.trim()), 'Куратор назначен').then(() => setCuratorId(''))
+            void run('curator', () => manageCourseApi.assignCurator(tree.id, curatorId), 'Куратор назначен').then(() => setCuratorId(''))
           }}
         >
-          <Input required value={curatorId} onChange={(e) => setCuratorId(e.target.value)} placeholder="ID пользователя (UUID)" className="font-mono" />
-          <Button type="submit" loading={busy === 'curator'}>
+          <Select required value={curatorId} onChange={(e) => setCuratorId(e.target.value)} aria-label="Куратор">
+            <option value="">{curators.loading ? 'Загрузка…' : 'Выберите куратора'}</option>
+            {curators.data?.map((u) => (
+              <option key={u.id} value={u.id}>
+                {u.full_name} · {u.email}
+              </option>
+            ))}
+          </Select>
+          <Button type="submit" loading={busy === 'curator'} disabled={!curatorId}>
             Назначить
           </Button>
         </form>

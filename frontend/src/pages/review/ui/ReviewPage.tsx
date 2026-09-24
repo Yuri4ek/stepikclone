@@ -52,7 +52,7 @@ export function ReviewPage() {
           <span className="flex flex-wrap items-center gap-2">
             <StepTypeBadge type={type} />
             <span>
-              {sub.student.full_name} · сдано {formatDate(sub.created_at)}
+              {sub.student?.full_name ?? 'Ученик'} · сдано {formatDate(sub.created_at)}
             </span>
             <Badge color={st.color}>{st.label}</Badge>
           </span>
