@@ -3,7 +3,7 @@ import type { Outline, OutlineLesson, OutlineModule, OutlineStep } from '@/share
 export interface FlatStep extends OutlineStep {
   lesson: OutlineLesson
   module: OutlineModule
-  /** Сквозной номер шага в курсе, с 1 */
+
   index: number
 }
 

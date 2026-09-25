@@ -4,10 +4,7 @@ import type { QueueItem } from '@/shared/api'
 import { cx, formatDate, hoursSince, waitLabel } from '@/shared/lib'
 import { ButtonLink, Icon } from '@/shared/ui'
 
-/**
- * Очередь ручной проверки — плотная таблица (брендбук, экран-ориентир «Очередь куратора»).
- * studentMeta — подпись под именем (например, уровень отставания из entities/lag).
- */
+
 export function QueueTable({ items, studentMeta, stepIcon }: { items: QueueItem[]; studentMeta?: (item: QueueItem) => ReactNode; stepIcon?: (item: QueueItem) => ReactNode }) {
   return (
     <div className="overflow-x-auto">

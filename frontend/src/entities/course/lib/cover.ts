@@ -11,7 +11,7 @@ export function courseCover(id: string) {
   return COVERS[h % COVERS.length]
 }
 
-/** Фон обложки: загруженная картинка с ровным затемнением под белый текст или плоский цвет */
+
 export function courseCoverStyle(course: { id: string; cover_url?: string | null }): CSSProperties {
   const url = mediaUrl(course.cover_url)
   if (!url) return { backgroundColor: courseCover(course.id) }
@@ -23,7 +23,7 @@ export function courseCoverStyle(course: { id: string; cover_url?: string | null
   }
 }
 
-/** Иконка курса по инструменту из паспорта: Scratch — блоки, Minecraft — куб, Python — код */
+
 export function courseIcon(course: { title: string; passport?: { tool?: string } | null }): IconName {
   const t = `${course.passport?.tool ?? ''} ${course.title}`.toLowerCase()
   if (t.includes('scratch')) return 'blocks'

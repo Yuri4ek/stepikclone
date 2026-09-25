@@ -19,7 +19,7 @@ export interface TestResult {
 const TIMEOUT_MS = 10_000
 const PY_LOAD_TIMEOUT_MS = 60_000
 
-/** Сравнение вывода: без учёта хвостовых пробелов и пустых строк в конце */
+
 export function normalizeOutput(s: string): string {
   return s
     .replace(/\r\n/g, '\n')

@@ -32,10 +32,7 @@ const nav: Record<Role, { to: string; label: string; icon: IconName }[]> = {
 
 const exact = new Set(['/curator', '/admin'])
 
-/**
- * Кабинет. У ученика — крупная шкала (кегль 18, кнопки 56), у куратора и администратора —
- * плотная (кегль 14–15): классы role-student / role-staff из tokens.css.
- */
+
 export function Layout() {
   const user = useUser()
   const { logout } = useAuth()
@@ -116,7 +113,7 @@ export function Layout() {
   )
 }
 
-/** Оболочка для гостей: лендинг и справка */
+
 export function PublicLayout() {
   return (
     <div className="flex min-h-screen flex-col bg-brand-mist">

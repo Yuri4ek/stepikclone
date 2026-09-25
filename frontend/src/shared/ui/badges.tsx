@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import { cx } from '../lib/cx'
 import { Icon, type IconName } from './Icon'
 
-/** Полоса прогресса: пустая часть — «Линия», заполненная — «Сигнальный синий» */
+
 export function ProgressBar({ value, className, tone = 'blue' }: { value: number; className?: string; tone?: 'blue' | 'done' }) {
   const v = Math.max(0, Math.min(100, value))
   return (
@@ -12,7 +12,7 @@ export function ProgressBar({ value, className, tone = 'blue' }: { value: number
   )
 }
 
-/** Полоса из сегментов — для расшифровки рейтинга (брендбук, раздел 06) */
+
 export function SegmentBar({ segments, total, className }: { segments: { value: number; className: string; label: string }[]; total: number; className?: string }) {
   const sum = Math.max(total, segments.reduce((a, s) => a + s.value, 0), 1)
   return (
@@ -26,7 +26,7 @@ export function SegmentBar({ segments, total, className }: { segments: { value: 
   )
 }
 
-/** Плашка-пилюля. Для статусов — только вместе с иконкой (раздел 03) */
+
 export function Badge({ children, className, icon }: { children: ReactNode; className?: string; icon?: IconName }) {
   return (
     <span className={cx('inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-sm font-semibold whitespace-nowrap', className ?? 'bg-st-idle-bg text-st-idle')}>
@@ -36,12 +36,12 @@ export function Badge({ children, className, icon }: { children: ReactNode; clas
   )
 }
 
-/** Баллы: спокойная синяя плашка с моноширинными цифрами */
+
 export function ScorePill({ children, className }: { children: ReactNode; className?: string }) {
   return <span className={cx('num inline-flex items-center rounded-full bg-brand-blue-50 px-2.5 py-0.5 text-sm font-semibold whitespace-nowrap text-brand-blue', className)}>{children}</span>
 }
 
-/** Точка + подпись — уровни отставания у куратора */
+
 export function Dot({ className, children }: { className: string; children: ReactNode }) {
   return (
     <span className={cx('inline-flex items-center gap-1.5 text-sm font-semibold whitespace-nowrap', className)}>

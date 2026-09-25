@@ -70,7 +70,7 @@ export function CourseBuilderPage() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[360px_1fr]">
-        {/* Дерево курса */}
+        {}
         <aside className="space-y-3 lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:self-start lg:overflow-y-auto lg:px-1 lg:pb-6">
           <button
             onClick={() => setSel({ kind: 'course' })}
@@ -150,7 +150,7 @@ export function CourseBuilderPage() {
           <InlineAdd label="Модуль" placeholder="Название модуля" onAdd={(title) => mutate(() => structureApi.addModule(tree.id, { title, position: nextPosition(tree.modules) }))} />
         </aside>
 
-        {/* Рабочая область */}
+        {}
         <section className="min-w-0">
           {sel.kind === 'course' && <CourseSettings key={tree.id + tree.status} tree={tree} onChanged={reload} />}
           {sel.kind === 'pick' && <TypePicker onPick={(type) => setSel({ kind: 'new', lessonId: sel.lessonId, type })} onCancel={() => setSel({ kind: 'course' })} />}

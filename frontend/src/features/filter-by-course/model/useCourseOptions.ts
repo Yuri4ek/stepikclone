@@ -2,7 +2,7 @@ import { courseApi } from '@/entities/course'
 import type { Role } from '@/shared/api'
 import { useAsync } from '@/shared/lib'
 
-/** Курсы для фильтров: админ видит все (в т.ч. черновики), куратор — опубликованные */
+
 export function useCourseOptions(role: Role) {
   return useAsync(async () => {
     if (role === 'admin') return (await courseApi.adminList()).map((c) => ({ id: c.id, title: c.title }))

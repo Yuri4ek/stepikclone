@@ -53,7 +53,7 @@ const MODES: { value: FieldMode; label: string }[] = [
   { value: 'off', label: 'не нужно' },
 ]
 
-/** Что сдаёт ученик: ссылка, скриншот, текст — у каждого поля свой режим */
+
 export function SubmitConfigField({ content, onChange, defaults, linkKind = true }: { content: StepContent; onChange: (c: StepContent) => void; defaults: SubmitConfig; linkKind?: boolean }) {
   const cfg = { ...defaults, ...((content.submit ?? {}) as Partial<SubmitConfig>) }
   const set = (key: keyof SubmitConfig, v: FieldMode) => onChange({ ...content, submit: { ...cfg, [key]: v } })
@@ -93,7 +93,7 @@ export function SubmitConfigField({ content, onChange, defaults, linkKind = true
 
 // ---------- Плеер ----------
 
-/** Загрузка скриншота работы: картинка уходит на сервер, в ответ кладём её адрес */
+
 function ScreenshotField({ value, onChange, required, disabled }: { value: string; onChange: (url: string) => void; required: boolean; disabled: boolean }) {
   const input = useRef<HTMLInputElement>(null)
   const [busy, setBusy] = useState(false)
@@ -153,7 +153,7 @@ interface ManualFormProps {
   canSubmit: boolean
   submit: (a: Answers) => void
   config: SubmitConfig
-  /** scratch | makecode | any — подпись и проверка адреса */
+
   linkKind?: string
   textLabel?: string
   textPlaceholder?: string
@@ -162,7 +162,7 @@ interface ManualFormProps {
   children?: ReactNode
 }
 
-/** Форма сдачи работы на ручную проверку: ссылка, скриншот, текст — по настройке шага */
+
 export function ManualSubmitForm({
   stepId,
   busy,

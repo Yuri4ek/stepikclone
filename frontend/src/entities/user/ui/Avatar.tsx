@@ -1,7 +1,7 @@
 import type { Role } from '@/shared/api'
 import { cx } from '@/shared/lib'
 
-/** Инициалы в круге «Синий 50» */
+
 export function Avatar({ name, size = 'md' }: { name: string; role?: Role; size?: 'sm' | 'md' | 'lg' }) {
   const initials = name
     .split(/\s+/)

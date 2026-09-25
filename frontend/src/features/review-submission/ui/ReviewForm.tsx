@@ -4,7 +4,7 @@ import { formatScore } from '@/shared/lib'
 import { Button, Card, ErrorBox, Field, Icon, Input, Textarea } from '@/shared/ui'
 import { reviewApi } from '../api/reviewApi'
 
-/** Оценка работы куратором: принять с баллами или вернуть с комментарием */
+
 export function ReviewForm({ submissionId, maxScore: max, onReviewed }: { submissionId: string; maxScore: number; onReviewed: (r: ReviewResult) => void }) {
   const [score, setScore] = useState<string>('')
   const [feedback, setFeedback] = useState('')

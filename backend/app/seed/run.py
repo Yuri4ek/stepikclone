@@ -36,7 +36,7 @@ def ago(days: float) -> datetime:
 
 
 def _wipe(db: Session) -> None:
-    # порядок с учётом FK
+
     db.execute(delete(StepQuestion))
     db.execute(delete(Submission))
     db.execute(delete(CourseProgress))
@@ -91,8 +91,6 @@ def _create_course(db: Session, spec: dict, admin: User, created_at: datetime) -
     return course
 
 
-# ---------- Прогресс демо-учеников ----------
-
 
 def correct_answers(step: Step) -> dict:
     c = step.content or {}
@@ -108,7 +106,7 @@ def correct_answers(step: Step) -> dict:
 def wrong_answers(step: Step) -> dict:
     c = step.content or {}
     if step.kind == "code":
-        # Частая ошибка в «Партах»: забыли округлить вверх
+
         return {"code": "a = int(input())\nb = int(input())\nc = int(input())\nprint((a + b + c) // 2)\n", "language": "python"}
     if c.get("correct_option_ids"):
         return {"selected_option_ids": c["correct_option_ids"][:1]}
@@ -280,7 +278,7 @@ def seed(*, force: bool = False, legacy: bool = False) -> None:
                 db.add(CourseCurator(course_id=c.id, user_id=curator.id))
 
         A = Act
-        # ---- Scratch (10 шагов) ----
+
         play(db, curator, anna, scratch, [
             A(days_ago=6), A(days_ago=6), A(days_ago=6, attempts=2),
             A(days_ago=5), A(days_ago=5),
@@ -311,7 +309,6 @@ def seed(*, force: bool = False, legacy: bool = False) -> None:
             A("pending", 0.4, {"text": "Кот по кругу, 120 повторов", "link": SCRATCH_LINK.format(302)}),
         ])
 
-        # ---- Minecraft (8 шагов) ----
         play(db, curator, ivan, mc, [
             A(days_ago=3), A(days_ago=3),
             A("pending", 0.2, {"text": "Дорожка из 10 блоков, команда «дорога»", "link": MAKECODE_LINK.format("Dorog4aA1"),
@@ -332,7 +329,6 @@ def seed(*, force: bool = False, legacy: bool = False) -> None:
         ])
         play(db, curator, anna, mc, [A(days_ago=2), A(days_ago=2)])
 
-        # ---- Алгоритмика (12 шагов) ----
         play(db, curator, anna, algo, [A(days_ago=3), A(days_ago=3), A(days_ago=2), A("fail", 0.1, attempts=1)])
         play(db, curator, ivan, algo, [
             A(days_ago=12), A(days_ago=12), A(days_ago=11), A(days_ago=10, attempts=2),
@@ -345,7 +341,6 @@ def seed(*, force: bool = False, legacy: bool = False) -> None:
 
         db.flush()
 
-        # ---- Вопросы по шагам ----
         def step_by_title(course: Course, title: str) -> Step:
             return next(s for s in progress_service.ordered_steps(db, course.id) if s.title == title)
 

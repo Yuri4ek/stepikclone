@@ -10,7 +10,7 @@ import { Card, EmptyState, ErrorBox, Loader, PageHeader, Segmented } from '@/sha
 
 type Filter = 'open' | 'answered'
 
-/** Вопросы учеников по конкретным шагам курса — обязательная часть контура куратора */
+
 export function QuestionsPage() {
   const user = useUser()
   const [status, setStatus] = useState<Filter>('open')

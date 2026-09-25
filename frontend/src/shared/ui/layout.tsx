@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import { cx } from '../lib/cx'
 import { Icon, type IconName } from './Icon'
 
-/** Карточка: белая, рамка «Линия», радиус 16 */
+
 export function Card({ className, children }: { className?: string; children: ReactNode }) {
   return <div className={cx('rounded-card border border-brand-line bg-white', className)}>{children}</div>
 }
@@ -32,12 +32,12 @@ export function EmptyState({ icon = 'inbox', title, children }: { icon?: IconNam
   )
 }
 
-/** Список строк без разделителей: подсветка при наведении */
+
 export function List({ children, className }: { children: ReactNode; className?: string }) {
   return <div className={cx('flex flex-col gap-0.5 p-2', className)}>{children}</div>
 }
 
-/** Заголовок секции капсом, как в брендбуке */
+
 export function SectionLabel({ children, className }: { children: ReactNode; className?: string }) {
   return <div className={cx('eyebrow mb-3 text-brand-ink-3', className)}>{children}</div>
 }

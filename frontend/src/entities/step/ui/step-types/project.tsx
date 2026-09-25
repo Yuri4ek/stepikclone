@@ -4,14 +4,14 @@ import { BLOCKS_HINT, CriteriaField, DefaultReviewView, ManualSubmitForm, Markdo
 import { ScratchEmbed } from './scratch'
 import type { StepTypeDef } from '../../model/types'
 
-/** Старое поле answer_format → новая настройка «что сдаёт ученик» */
+
 function legacyDefaults(format: string): SubmitConfig {
   if (format === 'link') return { link: 'required', screenshot: 'off', text: 'optional' }
   if (format === 'both') return { link: 'required', screenshot: 'off', text: 'required' }
   return { link: 'optional', screenshot: 'optional', text: 'required' }
 }
 
-/** Самостоятельная работа по критериям: ссылка, скриншот и/или текст — проверяет куратор */
+
 export const projectStep: StepTypeDef = {
   id: 'project',
   kind: 'task',

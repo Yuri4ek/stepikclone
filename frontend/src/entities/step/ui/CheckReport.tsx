@@ -10,10 +10,7 @@ const verdictText: Record<Verdict, string> = {
   ML: 'превышена память',
 }
 
-/**
- * Результат прогона на сервере: сколько тестов прошло и какие именно. Ввод и ожидаемый ответ
- * показываем только для примеров из условия — скрытые тесты остаются скрытыми.
- */
+
 export function CheckReport({ result, compact }: { result: CheckResult; compact?: boolean }) {
   const all = result.total > 0 && result.passed === result.total
   const firstFail = result.tests.find((t) => t.verdict !== 'OK')

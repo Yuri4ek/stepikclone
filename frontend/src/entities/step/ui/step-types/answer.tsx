@@ -5,7 +5,7 @@ import { useDraft } from '../../model/useDraft'
 import { BLOCKS_HINT, MarkdownField } from '../common'
 import type { EditorProps, PlayerProps, StepTypeDef } from '../../model/types'
 
-/** Верный ответ и допустимые варианты записи. Регистр, пробелы и «3,5» / «3.5» сервер не различает */
+
 export function AnswerKeyFields({ content, onChange }: EditorProps) {
   const accepted = list<string>(content, 'accepted_answers')
   return (
@@ -29,7 +29,7 @@ export function AnswerKeyFields({ content, onChange }: EditorProps) {
   )
 }
 
-/** Поле ответа ученика и кнопка «Проверить» */
+
 export function AnswerForm({ step, content, busy, canSubmit, submit, children }: PlayerProps & { children?: ReactNode }) {
   const [value, setValue] = useDraft(step.id, '')
   const numeric = (str(content, 'answer_kind') || 'number') === 'number'
@@ -52,7 +52,7 @@ export function AnswerForm({ step, content, busy, canSubmit, submit, children }:
   )
 }
 
-/** Контрольный вопрос с коротким ответом (числом или словом). Проверяет сервер — ответ ученику не отдаётся */
+
 export const answerStep: StepTypeDef = {
   id: 'answer',
   kind: 'quiz',

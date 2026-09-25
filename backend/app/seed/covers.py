@@ -9,7 +9,7 @@ from app.core.uploads import COVERS_DIR, ensure_upload_dirs
 
 ASSETS = Path(__file__).resolve().parent / "assets"
 
-# slug → имя файла в assets/
+
 _COVER_FILES: dict[str, str] = {
     "python-setup": "cover-edu.png",
     "python-first-steps": "cover-table.jpg",

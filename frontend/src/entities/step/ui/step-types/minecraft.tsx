@@ -28,7 +28,7 @@ function ChecklistEditor({ items, onChange }: { items: string[]; onChange: (v: s
 
 const MC_SUBMIT: SubmitConfig = { link: 'required', screenshot: 'required', text: 'optional' }
 
-/** Задание внутри мира Minecraft Education: программа из блоков MakeCode, сдаётся скриншот и ссылка на проект */
+
 export const minecraftStep: StepTypeDef = {
   id: 'minecraft',
   kind: 'task',

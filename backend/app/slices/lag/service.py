@@ -95,7 +95,6 @@ def _analyze(
         elif days_login >= WARNING_DAYS:
             signals.append({"code": "inactive", "level": "warning", "text": f"{_days(days_login)} без входа"})
         elif days_progress >= STALL_DAYS:
-            # Ранний сигнал: ученик ещё заходит, но перестал продвигаться
             level = "critical" if days_progress >= STALL_CRITICAL_DAYS else "warning"
             signals.append(
                 {"code": "stalled", "level": level, "text": f"Заходит, но {_days(days_progress)} без продвижения"}
@@ -152,7 +151,7 @@ def _analyze(
             )
 
     level = max((s["level"] for s in signals), key=_ORDER.__getitem__, default="ok")
-    # Несколько тревожных сигналов сразу — повод написать первым делом
+
     if level == "warning" and sum(1 for s in signals if s["level"] == "warning") >= 3:
         level = "critical"
 

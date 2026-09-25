@@ -8,16 +8,10 @@ import { scratchAnswerStep, scratchStep } from '../ui/step-types/scratch'
 import { theoryStep } from '../ui/step-types/theory'
 import type { StepTypeDef } from './types'
 
-/**
- * Реестр типов шагов. Чтобы добавить новый тип (например, «Робототехника»):
- * 1) создать модуль со StepTypeDef (Editor + Player [+ ReviewView]) в ui/step-types,
- * 2) добавить его в этот список.
- * API и база не меняются: тип хранится в content.type, проверка — механизмом kind из реестра бэкенда.
- * Шаг незнакомого фронтенду типа всё равно откроется — общим плеером своего механизма проверки.
- */
+
 export const STEP_TYPES: StepTypeDef[] = [theoryStep, quizStep, answerStep, algoStep, scratchAnswerStep, scratchStep, minecraftStep, projectStep]
 
-/** Общий тип для механизма проверки, если content.type фронтенду неизвестен */
+
 const kindFallback: Record<string, StepTypeDef> = {
   theory: theoryStep,
   quiz: quizStep,

@@ -3,7 +3,7 @@ import { http, upload, type AdminUser, type CourseOut, type CoursePassport, type
 export const manageCourseApi = {
   update: (id: string, data: { title?: string; description?: string; passport?: CoursePassport }) => http.patch<CourseOut>(`/admin/courses/${id}`, data),
   publish: (id: string) => http.post<CourseOut>(`/admin/courses/${id}/publish`),
-  /** Снять с публикации: курс пропадёт из каталога, у записанных учеников останется */
+
   unpublish: (id: string) => http.post<CourseOut>(`/admin/courses/${id}/unpublish`),
   uploadCover: (id: string, file: File) => upload<{ id: string; cover_url: string }>(`/admin/courses/${id}/cover`, file),
   users: (role?: Role) => http.get<AdminUser[]>('/admin/users', { role }),

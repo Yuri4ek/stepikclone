@@ -46,7 +46,7 @@ export function AppRouter() {
             <Route path="history" element={<HistoryPage />} />
             <Route path="courses/:courseId/steps/:stepId" element={<StepPage />} />
           </Route>
-          {/* Прогресс — по своей записи на курс (для любой роли) */}
+          {}
           <Route path="courses/:courseId/progress" element={<ProgressPage />} />
 
           <Route element={<RequireRole roles={['curator', 'admin']} />}>

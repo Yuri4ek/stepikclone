@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 
-/** Отправка формы входа/регистрации: после успеха — туда, откуда пришли */
+
 export function useAuthSubmit() {
   const navigate = useNavigate()
   const location = useLocation()

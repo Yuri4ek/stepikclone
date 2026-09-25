@@ -37,10 +37,7 @@ export function ErrorBox({ error, onRetry }: { error: Error | string; onRetry?: 
   )
 }
 
-/**
- * Подсказки и сообщения. Красный тон — только для «Не прошло тесты» (брендбук, раздел 09),
- * на янтарном фоне текст цвета «Ночь».
- */
+
 const tones = {
   info: 'border-brand-blue-200 bg-brand-blue-50 text-brand-ink',
   success: 'border-st-done/20 bg-st-done-bg text-brand-ink',

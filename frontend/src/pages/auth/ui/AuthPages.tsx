@@ -4,7 +4,7 @@ import { STEP_TYPES } from '@/entities/step'
 import { LoginForm, RegisterForm } from '@/features/auth'
 import { Icon, Logo } from '@/shared/ui'
 
-/** Экран входа — «Ночь» с тёмным свечением (брендбук, разделы 02 и 09) */
+
 function AuthShell({ children }: { children: ReactNode }) {
   return (
     <div className="grid min-h-screen bg-brand-mist lg:grid-cols-[1fr_1.1fr]">

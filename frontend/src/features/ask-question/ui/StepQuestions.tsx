@@ -4,7 +4,7 @@ import { useAsync } from '@/shared/lib'
 import { Button, Card, ErrorBox, Icon, Textarea } from '@/shared/ui'
 import { askApi } from '../api/askApi'
 
-/** «Спросить куратора» на странице шага: вопрос привязан к шагу, ответ появится здесь же */
+
 export function StepQuestions({ stepId }: { stepId: string }) {
   const { data, reload } = useAsync(() => questionApi.forStep(stepId), [stepId])
   const [open, setOpen] = useState(false)

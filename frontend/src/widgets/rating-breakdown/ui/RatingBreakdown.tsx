@@ -3,10 +3,7 @@ import type { CourseProgress } from '@/shared/api'
 import { cx, formatScore, plural } from '@/shared/lib'
 import { Card, SegmentBar } from '@/shared/ui'
 
-/**
- * Расшифровка баллов (брендбук, раздел 06): итог, сегменты по источникам,
- * подписи с числами и подсказка, что сделать дальше. Число без расшифровки не показываем.
- */
+
 export function RatingBreakdown({ progress, steps, className }: { progress: CourseProgress; steps: FlatStep[]; className?: string }) {
   const r = progress.rating
   const auto = r.breakdown.filter((b) => b.source === 'auto')
@@ -84,7 +81,7 @@ export function RatingBreakdown({ progress, steps, className }: { progress: Cour
   )
 }
 
-/** Баллы, недобранные в уже зачтённых заданиях: их уже не получить */
+
 function lost(items: { score: number; max_score: number }[]) {
   return items.reduce((a, b) => a + Math.max(0, b.max_score - b.score), 0)
 }

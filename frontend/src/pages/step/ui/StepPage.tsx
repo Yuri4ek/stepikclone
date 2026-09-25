@@ -31,7 +31,7 @@ function Comment({ text }: { text: string }) {
   )
 }
 
-/** Результат автопроверки: ответ или прогон по тестам. Берётся из последней отправки — виден и после перезагрузки */
+
 function AutoResult({ passed, feedback, result, score, max, type, nextId, courseId }: { passed: boolean; feedback: string | null; result: CheckResult | null | undefined; score: number | null; max: number; type: StepTypeDef; nextId?: string | null; courseId: string }) {
   const tests = type.check === 'tests'
   // «Верно» — служебный ответ сервера; показываем только содержательные пояснения и подсказки
@@ -75,7 +75,7 @@ function AutoResult({ passed, feedback, result, score, max, type, nextId, course
   )
 }
 
-/** Результат проверки. Тон — как тренер после тренировки: что получилось, что поправить, куда дальше */
+
 function ResultBanner({ step, type, last, nextId, courseId }: { step: LearningStep; type: StepTypeDef; last: LastResult | null; nextId?: string | null; courseId: string }) {
   const status = step.progress.status
   const fb = step.progress.feedback

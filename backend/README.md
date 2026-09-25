@@ -10,7 +10,7 @@ cd backend
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env
+cp .env .env
 
 alembic upgrade head
 PYTHONPATH=. python -m app.seed.run --force   # --legacy добавит старые курсы-заглушки

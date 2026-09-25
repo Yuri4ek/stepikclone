@@ -11,7 +11,7 @@ const passportFields: { key: keyof CoursePassport; label: string; placeholder: s
   { key: 'tool', label: 'Инструмент', placeholder: 'Scratch 3' },
 ]
 
-/** Настройки курса: название, описание и паспорт, обложка, публикация, кураторы и ученики */
+
 export function CourseSettings({ tree, onChanged }: { tree: AdminCourseTree; onChanged: () => Promise<void> }) {
   const [form, setForm] = useState({ title: tree.title, description: tree.description, passport: tree.passport ?? {} })
   const [busy, setBusy] = useState<string | null>(null)

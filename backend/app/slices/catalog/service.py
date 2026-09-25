@@ -32,7 +32,7 @@ def list_courses(db: Session, user: User, limit: int, offset: int) -> CatalogLis
         e.course_id: e
         for e in db.scalars(select(Enrollment).where(Enrollment.user_id == user.id)).all()
     }
-    # Снятый с публикации курс остаётся у тех, кто уже на нём учится
+
     visible = or_(Course.status == CourseStatus.published, Course.id.in_(list(enrollments)))
     q = select(Course).where(visible).order_by(Course.created_at, Course.title)
     total = db.scalar(select(func.count()).select_from(Course).where(visible)) or 0

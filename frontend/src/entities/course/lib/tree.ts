@@ -12,5 +12,5 @@ export function sortCourseTree(t: AdminCourseTree): AdminCourseTree {
   }
 }
 
-/** Позиция для нового элемента в конце списка */
+
 export const nextPosition = (items: { position: number }[]) => items.reduce((m, i) => Math.max(m, i.position), 0) + 1

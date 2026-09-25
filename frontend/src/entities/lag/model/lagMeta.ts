@@ -1,10 +1,6 @@
 import type { LagLevel } from '@/shared/api'
 
-/**
- * Три уровня отставания для куратора (брендбук, раздел 03). Уровень считает бэкенд (app/slices/lag):
- * кроме «давно не заходил» он ловит ранние сигналы — заходит, но не продвигается; застрял на шаге;
- * не исправляет возвращённую работу; отстаёт от группы. Так куратор видит проблему раньше, чем ученик пропадёт.
- */
+
 export type LagState = LagLevel
 
 export const lagMeta: Record<LagState, { label: string; cls: string; hint: string }> = {

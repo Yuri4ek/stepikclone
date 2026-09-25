@@ -17,7 +17,7 @@ from dataclasses import dataclass
 
 MAX_CODE_BYTES = 64 * 1024
 MAX_OUTPUT_BYTES = 1024 * 1024
-# Одновременно гоняем не больше N решений, чтобы стенд не лёг от наплыва отправок
+
 _slots = threading.BoundedSemaphore(int(os.environ.get("JUDGE_CONCURRENCY", "4")))
 
 
@@ -49,7 +49,7 @@ _IDS = _judge_ids()
 def _limits(cpu_seconds: int, memory_mb: int):
     def apply() -> None:
         if _IDS:
-            # Без сброса прав прогон небезопасен — пусть лучше упадёт, чем выполнится от root
+
             os.setgroups([])
             os.setgid(_IDS[1])
             os.setuid(_IDS[0])
@@ -58,7 +58,7 @@ def _limits(cpu_seconds: int, memory_mb: int):
 
             resource.setrlimit(resource.RLIMIT_CPU, (cpu_seconds, cpu_seconds + 1))
             resource.setrlimit(resource.RLIMIT_FSIZE, (MAX_OUTPUT_BYTES, MAX_OUTPUT_BYTES))
-            # RLIMIT_AS работает на Linux; на macOS setrlimit может отказать — тогда без лимита памяти
+
             limit = (memory_mb + 64) * 1024 * 1024
             try:
                 resource.setrlimit(resource.RLIMIT_AS, (limit, limit))
@@ -96,7 +96,7 @@ def run_tests(code: str, tests: list[dict], time_limit_ms: int = 1000, memory_li
         env = {"PYTHONIOENCODING": "utf-8", "PYTHONDONTWRITEBYTECODE": "1", "PATH": "/usr/bin:/bin"}
         for test in tests:
             if timeouts >= 2:
-                # Два превышения времени подряд — остальные тесты не гоняем, результат уже ясен
+
                 verdicts.append(TestVerdict("TLE", 0, "", "Тест пропущен: решение слишком медленное"))
                 continue
             started = time.perf_counter()

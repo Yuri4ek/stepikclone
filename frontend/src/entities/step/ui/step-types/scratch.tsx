@@ -33,7 +33,7 @@ function ProjectUrlField({ content, onChange }: EditorProps) {
 
 const SCRATCH_SUBMIT: SubmitConfig = { link: 'required', screenshot: 'off', text: 'optional' }
 
-/** Scratch: разбор блочной программы, ученик сдаёт изменённый проект ссылкой — проверяет куратор */
+
 export const scratchStep: StepTypeDef = {
   id: 'scratch',
   kind: 'task',
@@ -80,7 +80,7 @@ export const scratchStep: StepTypeDef = {
   ),
 }
 
-/** Scratch: разбор блочной программы с ответом числом — проверяется автоматически */
+
 export const scratchAnswerStep: StepTypeDef = {
   id: 'scratch_answer',
   kind: 'quiz',

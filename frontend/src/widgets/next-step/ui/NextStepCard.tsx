@@ -10,10 +10,7 @@ const actionText: Partial<Record<StepStatus, string>> = {
   submitted: 'Работа у куратора — можно идти дальше',
 }
 
-/**
- * «Следующий шаг» — самый крупный элемент главного экрана ученика (брендбук, принцип 1).
- * Тёмное свечение здесь — единственный разрешённый градиент.
- */
+
 export function NextStepCard({ courseId, courseTitle, step, total, waiting = 0, className }: { courseId: string; courseTitle: string; step: FlatStep | null; total: number; waiting?: number; className?: string }) {
   if (!step) {
     return (

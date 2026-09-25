@@ -3,7 +3,7 @@ import type { Question } from '@/shared/api'
 import { formatDate } from '@/shared/lib'
 import { Badge, Icon } from '@/shared/ui'
 
-/** Вопрос ученика и ответ куратора — одна пара, без переписки */
+
 export function QuestionThread({ q, meta, children }: { q: Question; meta?: ReactNode; children?: ReactNode }) {
   return (
     <div className="space-y-3">

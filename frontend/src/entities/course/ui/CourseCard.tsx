@@ -4,7 +4,7 @@ import { formatPercent, plural } from '@/shared/lib'
 import { Badge, Card, Icon, ProgressBar } from '@/shared/ui'
 import { courseCoverStyle, courseIcon } from '../lib/cover'
 
-/** Карточка курса из каталога. Кнопки действий передаются снаружи — их собирают фичи и виджеты */
+
 export function CourseCard({ course, actions, footer }: { course: CatalogCourse; actions?: ReactNode; footer?: ReactNode }) {
   const e = course.enrollment
   return (

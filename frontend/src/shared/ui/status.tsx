@@ -1,10 +1,7 @@
 import { Badge } from './badges'
 import { statusTone, type StatusTone } from './statusMeta'
 
-/**
- * Плашка статуса. checkedBy — мелкая подпись под «Зачтено»: ручная и автоматическая проверка
- * выглядят одинаково и одинаково влияют на прогресс, отличается только подпись.
- */
+
 export function StatusPill({ tone, checkedBy, label }: { tone: StatusTone; checkedBy?: 'manual' | 'auto' | null; label?: string }) {
   const t = statusTone[tone]
   const badge = (

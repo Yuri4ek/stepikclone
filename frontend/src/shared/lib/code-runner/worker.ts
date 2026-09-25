@@ -23,7 +23,7 @@ let pyodide: Promise<Pyodide> | null = null
 
 function loadPython(): Promise<Pyodide> {
   if (!pyodide) {
-    pyodide = import(/* @vite-ignore */ PYODIDE_URL).then((m: { loadPyodide: () => Promise<Pyodide> }) => m.loadPyodide())
+    pyodide = import( PYODIDE_URL).then((m: { loadPyodide: () => Promise<Pyodide> }) => m.loadPyodide())
   }
   return pyodide
 }

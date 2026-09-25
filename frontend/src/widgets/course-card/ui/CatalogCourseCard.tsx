@@ -5,7 +5,7 @@ import { useEnrollCourse } from '@/features/enroll-course'
 import type { CatalogCourse } from '@/shared/api'
 import { Button, ButtonLink, ErrorBox, Icon } from '@/shared/ui'
 
-/** Карточка курса в каталоге: ученик может записаться, остальные — посмотреть программу */
+
 export function CatalogCourseCard({ course, onEnrolled }: { course: CatalogCourse; onEnrolled?: () => void }) {
   const user = useUser()
   const navigate = useNavigate()

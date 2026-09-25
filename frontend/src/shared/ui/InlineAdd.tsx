@@ -4,7 +4,7 @@ import { Button } from './Button'
 import { Input } from './form'
 import { Icon } from './Icon'
 
-/** Поле ввода, которое появляется по кнопке: для добавления модуля / урока */
+
 export function InlineAdd({ label, placeholder, onAdd, small }: { label: string; placeholder: string; onAdd: (title: string) => Promise<void>; small?: boolean }) {
   const [open, setOpen] = useState(false)
   const [value, setValue] = useState('')

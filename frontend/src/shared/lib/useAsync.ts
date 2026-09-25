@@ -8,7 +8,7 @@ export interface AsyncState<T> {
   setData: (v: T) => void
 }
 
-/** Загрузка данных с перезапуском при смене deps. Ответы устаревших запросов отбрасываются. */
+
 export function useAsync<T>(fn: () => Promise<T>, deps: unknown[]): AsyncState<T> {
   const [data, setData] = useState<T>()
   const [error, setError] = useState<Error>()

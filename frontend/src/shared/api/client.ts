@@ -55,7 +55,7 @@ function normalizeNumbers(value: unknown): unknown {
   return value
 }
 
-/** Абсолютный адрес файла с бэкенда (обложки, картинки шагов приходят как /uploads/...) */
+
 export function mediaUrl(path: string | null | undefined): string | null {
   if (!path) return null
   if (/^(https?:|data:|blob:)/.test(path)) return path
@@ -98,7 +98,7 @@ export async function request<T>(
   return normalizeNumbers(data) as T
 }
 
-/** Загрузка файла (multipart/form-data, поле file) */
+
 export async function upload<T>(path: string, file: File): Promise<T> {
   const form = new FormData()
   form.append('file', file)

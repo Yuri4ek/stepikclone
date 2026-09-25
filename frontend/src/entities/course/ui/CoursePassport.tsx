@@ -7,7 +7,7 @@ const rows: { key: keyof CoursePassport; label: string; icon: IconName }[] = [
   { key: 'tool', label: 'Инструмент', icon: 'settings' },
 ]
 
-/** Паспорт курса из пакета содержания: классы, объём, инструмент, цель */
+
 export function CoursePassportCard({ passport, className }: { passport: CoursePassport | null | undefined; className?: string }) {
   if (!passport || !Object.values(passport).some(Boolean)) return null
   return (

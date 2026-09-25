@@ -34,7 +34,7 @@ export function CodeEditor({ value, onChange, disabled, rows = 10 }: { value: st
   )
 }
 
-/** Прогон в браузере — только на примерах из условия, попытка не тратится */
+
 function LocalResults({ results }: { results: TestResult[] }) {
   const passed = results.filter((r) => r.passed).length
   const all = passed === results.length
@@ -226,7 +226,7 @@ function AlgoPlayer({ step, content, busy, canSubmit, submit }: Parameters<StepT
   )
 }
 
-/** Задача с тестами: код на Python прогоняется на сервере по всем тестам, результат — сразу */
+
 export const algoStep: StepTypeDef = {
   id: 'algo',
   kind: 'code',

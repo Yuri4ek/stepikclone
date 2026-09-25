@@ -3,7 +3,7 @@ import type { Question } from '@/shared/api'
 import { Button, ErrorBox, Textarea } from '@/shared/ui'
 import { answerQuestionApi } from '../api/answerQuestionApi'
 
-/** Ответ куратора на вопрос ученика по шагу */
+
 export function AnswerQuestionForm({ questionId, onAnswered }: { questionId: string; onAnswered: (q: Question) => void }) {
   const [text, setText] = useState('')
   const [busy, setBusy] = useState(false)

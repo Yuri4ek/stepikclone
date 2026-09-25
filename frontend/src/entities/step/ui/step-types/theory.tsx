@@ -20,7 +20,7 @@ interface StepImage {
   alt?: string
 }
 
-/** Загрузка картинки на сервер и вставка её в Markdown */
+
 function ImageUpload({ onUploaded }: { onUploaded: (url: string, name: string) => void }) {
   const input = useRef<HTMLInputElement>(null)
   const [busy, setBusy] = useState(false)

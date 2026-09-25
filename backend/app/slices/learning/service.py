@@ -100,7 +100,6 @@ def get_step(db: Session, user: User, step_id: uuid.UUID) -> StepDetailOut:
             "best_score": float(sp.best_score) if sp.best_score is not None else None,
             "attempts": sp.attempts_count,
             "feedback": last.feedback if last else None,
-            # Своя последняя отправка вместе с ответом: ученик продолжает с того, что отправил
             "last_submission": {**_submission_out(last).model_dump(mode="json"), "payload": last.payload or {}} if last else None,
         },
     )
@@ -171,7 +170,7 @@ def submit(db: Session, user: User, step_id: uuid.UUID, data: SubmitIn) -> Submi
             if sp.best_score is None or result.score > sp.best_score:
                 sp.best_score = result.score
         elif sp.status != StepProgressStatus.passed:
-            # Неудачная попытка не отнимает уже зачтённый шаг; иначе — «Не прошло», можно отправить снова
+
             sp.status = StepProgressStatus.failed
             sp.score = result.score
         step_status = StepProgressStatus.passed if result.passed else StepProgressStatus.failed

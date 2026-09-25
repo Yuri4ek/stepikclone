@@ -21,11 +21,7 @@ export function isUrl(s: string): boolean {
   }
 }
 
-/**
- * Поля, которые видят только куратор и система проверки (блоки «Правильный ответ», «Критерии проверки»,
- * «Эталонное решение» пакета содержания). Бэкенд не отдаёт их ученику — см. app/steps/registry.py.
- * Здесь тот же список нужен для предпросмотра «глазами ученика» в конструкторе.
- */
+
 const PRIVATE_KEYS = ['correct_option_id', 'correct_option_ids', 'correct_answer', 'accepted_answers', 'criteria', 'reference_solution', 'hint', 'explanation']
 
 export function studentView(content: StepContent): StepContent {
@@ -58,7 +54,7 @@ export function submitConfig(content: StepContent, defaults: SubmitConfig): Subm
   return { link: mode(raw.link, defaults.link), screenshot: mode(raw.screenshot, defaults.screenshot), text: mode(raw.text, defaults.text) }
 }
 
-/** Куда ведёт ссылка: для Scratch проверяем адрес проекта, чтобы ребёнок не прислал ссылку на редактор */
+
 export const linkKinds: Record<string, { label: string; placeholder: string; pattern?: RegExp; hint?: string }> = {
   scratch: {
     label: 'Ссылка на твой проект в Scratch',
@@ -74,7 +70,7 @@ export const linkKinds: Record<string, { label: string; placeholder: string; pat
   any: { label: 'Ссылка на результат', placeholder: 'https://disk.yandex.ru/…' },
 }
 
-/** В шаге с ответом задан правильный ответ */
+
 export function validateAnswerKey(c: StepContent): string | null {
   return str(c, 'correct_answer').trim() || str(c, 'correct_option_id').trim() ? null : 'Укажите правильный ответ'
 }

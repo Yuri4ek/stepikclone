@@ -12,7 +12,7 @@ async function load() {
   return { queue, lag, questions }
 }
 
-/** Ключ «ученик + курс» — чтобы показать уровень отставания рядом с работой в очереди */
+
 const lagKey = (studentId: string, courseId: string) => `${studentId}:${courseId}`
 
 function Stat({ label, value, to, hint, icon, attention }: { label: string; value: number; to: string; hint: string; icon: IconName; attention?: boolean }) {

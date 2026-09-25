@@ -3,11 +3,7 @@ import { Link } from 'react-router-dom'
 import { cx } from '../lib/cx'
 import { Spinner } from './feedback'
 
-/**
- * Кнопки по брендбуку (раздел 06): главная — синяя, вторичная — белая с рамкой,
- * ссылка — синий текст, «Вернуть с комментарием» — янтарная рамка, закрытый шаг — туман.
- * Градиентов на кнопках нет.
- */
+
 type Variant = 'primary' | 'secondary' | 'ghost' | 'amber' | 'danger' | 'dark'
 const variants: Record<Variant, string> = {
   primary: 'bg-brand-blue text-white hover:bg-brand-blue-hover disabled:bg-st-idle-bg disabled:text-brand-ink-3',

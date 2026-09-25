@@ -4,7 +4,7 @@ import { useAsync } from '@/shared/lib'
 import { Button, Icon, Select } from '@/shared/ui'
 import { manageCourseApi } from '../api/manageCourseApi'
 
-/** Назначить куратора на курс или записать ученика — из списка пользователей */
+
 export function AssignToCourse({ userId, role, exclude = [], onDone }: { userId: string; role: 'curator' | 'student'; exclude?: string[]; onDone?: () => void }) {
   const courses = useAsync(() => courseApi.adminList(), [])
   const [courseId, setCourseId] = useState('')

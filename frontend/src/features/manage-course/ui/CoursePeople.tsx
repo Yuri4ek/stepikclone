@@ -4,7 +4,7 @@ import { formatPercent, useAsync } from '@/shared/lib'
 import { Button, Card, ErrorBox, Icon, Select } from '@/shared/ui'
 import { manageCourseApi } from '../api/manageCourseApi'
 
-/** Кураторы и ученики курса: назначить, записать, снять */
+
 export function CoursePeople({ courseId }: { courseId: string }) {
   const people = useAsync(() => manageCourseApi.people(courseId), [courseId])
   const curators = useAsync(() => manageCourseApi.users('curator'), [])

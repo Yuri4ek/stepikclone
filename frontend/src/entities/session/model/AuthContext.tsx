@@ -59,7 +59,7 @@ export function useAuth(): AuthState {
   return ctx
 }
 
-/** Пользователь гарантированно есть внутри защищённых маршрутов */
+
 // eslint-disable-next-line react/only-export-components
 export function useUser(): User {
   const { user } = useAuth()

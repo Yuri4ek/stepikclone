@@ -5,11 +5,7 @@ import { resolveStepType, stepStatusMeta, stepTone } from '@/entities/step'
 import { cx } from '@/shared/lib'
 import { Icon } from '@/shared/ui'
 
-/**
- * Карта курса — «где я и что дальше» (брендбук, раздел 06).
- * Узел: иконка типа шага; цвет и значок в углу — статус. Текущий шаг выделен синим ореолом,
- * другие элементы так не выделяются.
- */
+
 export function CourseMap({ steps, currentId, courseId, compact }: { steps: FlatStep[]; currentId?: string; courseId: string; compact?: boolean }) {
   const scroller = useRef<HTMLDivElement>(null)
   const currentRef = useRef<HTMLDivElement>(null)

@@ -42,7 +42,7 @@ def get_course_progress(
             "place": board["place"],
             "group_size": board["group_size"],
         },
-        # Серия — по всем курсам ученика: занимался сегодня хоть где-то — серия продолжается
+
         streak_days=service.streak(service.activity_days(db, user.id)),
         updated_at=cp.updated_at,
     )

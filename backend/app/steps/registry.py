@@ -19,8 +19,7 @@ from decimal import Decimal
 
 from app.steps import judge
 
-# Поля content, которые видят только куратор и система проверки (блоки «Правильный ответ»,
-# «Критерии проверки», «Эталонное решение» из пакета содержания)
+
 PRIVATE_KEYS = frozenset(
     {
         "correct_option_id",
@@ -46,7 +45,7 @@ class GradeResult:
 @dataclass(frozen=True)
 class Checker:
     kind: str
-    # none — засчитывается при прочтении; auto — результат сразу; manual — очередь куратора
+
     mode: str
     label: str
     default_type: str
@@ -88,8 +87,6 @@ def public_content(kind: str, content: dict | None) -> dict:
         data = checker.public(data)
     return data
 
-
-# ---------- Контрольный вопрос: один / несколько вариантов или короткий ответ ----------
 
 
 def normalize_answer(value: object) -> str:
@@ -145,8 +142,6 @@ def public_quiz(content: dict) -> dict:
     return content
 
 
-# ---------- Задача с тестами ----------
-
 
 def _tests(content: dict) -> list[dict]:
     return [t for t in content.get("tests") or [] if isinstance(t, dict)]
@@ -185,7 +180,7 @@ def grade_code(content: dict, answers: dict, max_score: Decimal) -> GradeResult:
     for i, (t, v) in enumerate(zip(tests, verdicts, strict=True), start=1):
         row: dict = {"n": i, "verdict": v.verdict, "time_ms": v.time_ms, "sample": bool(t.get("sample"))}
         if t.get("sample"):
-            # Входные данные и ответ показываем только для примеров из условия — скрытые тесты остаются скрытыми
+
             row.update(input=t.get("input", ""), expected=t.get("output", ""), actual=v.actual[:2000])
         if v.error:
             row["error"] = v.error
@@ -211,8 +206,6 @@ def validate_code(answers: dict) -> str | None:
         return "Решение длиннее 64 КБ"
     return None
 
-
-# ---------- Ручная проверка ----------
 
 
 def validate_manual(answers: dict) -> str | None:

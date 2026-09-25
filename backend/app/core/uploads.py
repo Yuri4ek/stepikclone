@@ -7,11 +7,9 @@ from app.core.config import get_settings
 
 settings = get_settings()
 
-# корень загрузок относительно cwd при запуске uvicorn из backend/
 UPLOAD_ROOT = Path(settings.upload_dir).resolve()
 COVERS_DIR = UPLOAD_ROOT / "covers"
 STEPS_DIR = UPLOAD_ROOT / "steps"
-# Скриншоты и файлы, которые сдают ученики
 SUBMISSIONS_DIR = UPLOAD_ROOT / "submissions"
 
 
@@ -36,6 +34,6 @@ async def save_image(file: UploadFile, directory: Path) -> str:
     name = f"{uuid.uuid4().hex}{ALLOWED_TYPES[content_type]}"
     path = directory / name
     path.write_bytes(data)
-    # публичный URL относительно API-хоста
+
     rel = directory.name
     return f"/uploads/{rel}/{name}"

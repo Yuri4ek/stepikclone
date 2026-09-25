@@ -30,14 +30,12 @@ export function PublicOnly() {
   return <Outlet />
 }
 
-/** Главная: гостю — лендинг, вошедшему — его кабинет */
 export function Home() {
   const { user, ready } = useAuth()
   if (!ready) return <Loader />
   return user ? <Navigate to={HOME[user.role]} replace /> : <LandingPage />
 }
 
-/** Справка доступна всем: с кабинетом для вошедших, с публичной шапкой для гостей */
 export function AdaptiveLayout() {
   const { user, ready } = useAuth()
   if (!ready) return <Loader />

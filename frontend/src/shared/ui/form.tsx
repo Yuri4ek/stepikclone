@@ -27,7 +27,7 @@ export function Select(props: SelectHTMLAttributes<HTMLSelectElement>) {
   return <select {...props} className={cx(inputCls, 'cursor-pointer pr-9', props.className)} />
 }
 
-/** Сегментированный переключатель */
+
 export function Segmented<T extends string>({ value, onChange, options, className }: { value: T; onChange: (v: T) => void; options: { value: T; label: string }[]; className?: string }) {
   return (
     <div className={cx('inline-flex flex-wrap rounded-btn bg-st-idle-bg p-1 text-sm', className)} role="tablist">

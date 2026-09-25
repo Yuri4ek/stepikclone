@@ -25,10 +25,7 @@ export interface Page<T> {
 
 export type CourseStatus = 'draft' | 'published'
 
-/**
- * Механизм проверки шага (реестр на бэкенде: app/steps/registry.py). Строка, а не закрытый список:
- * новый механизм добавляется на сервере без миграций. Как шаг выглядит у ученика — в `type` (content.type).
- */
+
 export type StepKind = 'theory' | 'quiz' | 'task' | 'code' | (string & {})
 
 export type StepStatus =
@@ -42,7 +39,7 @@ export type StepStatus =
 
 export type StepContent = Record<string, unknown>
 
-/** Паспорт курса из пакета содержания: классы, объём, инструмент, цель */
+
 export interface CoursePassport {
   grades?: string
   volume?: string
@@ -83,7 +80,7 @@ export interface OutlineStep {
   title: string
   position: number
   kind: StepKind
-  /** Тип шага для ученика: theory, quiz, answer, scratch, scratch_answer, minecraft, project, algo… */
+
   type: string
   max_score: number
   is_required: boolean
@@ -165,13 +162,13 @@ export interface SubmitResult {
   feedback: string | null
   result: CheckResult | null
   progress_percent: number
-  /** Следующий шаг, если он уже открыт */
+
   next_step_id: string | null
 }
 
 export type Verdict = 'OK' | 'WA' | 'TLE' | 'RE' | 'ML'
 
-/** Результат прогона по тестам. Ввод и ответ приходят только для примеров из условия */
+
 export interface CheckResult {
   passed: number
   total: number
@@ -233,15 +230,15 @@ export interface CourseProgress {
     score: number
     total_score: number
     total_max: number
-    /** Баллы за работы, которые сейчас у куратора */
+
     pending_max: number
     formula: string
     breakdown: BreakdownItem[]
-    /** Место в группе курса (по рейтингу) */
+
     place: number | null
     group_size: number
   }
-  /** Сколько дней подряд ученик что-то сдаёт или проходит (по всем курсам) */
+
   streak_days: number
   updated_at: string
 }
@@ -281,7 +278,7 @@ export interface ReviewSubmission {
   step: { id: string; title: string; kind: StepKind; type: string; max_score: number; content: StepContent }
   student: StudentShort | null
   course_id: string
-  /** Какая по счёту это попытка ученика на шаге */
+
   attempt: number
   created_at: string
 }
@@ -317,7 +314,7 @@ export interface LagItem {
   current_step_title: string | null
   last_seen_at: string | null
   last_progress_at: string | null
-  /** Почему ученик в группе риска — ранние сигналы, а не только «давно не заходил» */
+
   signals: LagSignal[]
   reason: string
 }
@@ -363,7 +360,7 @@ export interface AdminUser {
   full_name: string
   role: Role
   last_seen_at?: string | null
-  /** Кураторам — курсы, на которые назначены; ученикам — курсы, на которые записаны */
+
   courses: { id: string; title: string }[]
 }
 

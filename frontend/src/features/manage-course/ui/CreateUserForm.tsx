@@ -3,7 +3,7 @@ import type { AdminUser, Role } from '@/shared/api'
 import { Button, Card, ErrorBox, Field, Input, Select } from '@/shared/ui'
 import { manageCourseApi } from '../api/manageCourseApi'
 
-/** Новый пользователь: ученики могут зарегистрироваться сами, кураторов и администраторов заводит администратор */
+
 export function CreateUserForm({ role, onCreated, onCancel }: { role: Role; onCreated: (u: AdminUser) => void; onCancel: () => void }) {
   const [form, setForm] = useState({ full_name: '', email: '', password: '', role })
   const [busy, setBusy] = useState(false)

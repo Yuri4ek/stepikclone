@@ -1,9 +1,6 @@
 import type { IconName } from './Icon'
 
-/**
- * Шесть статусов брендбука (раздел 03). У каждого — своя пара «цвет + иконка»,
- * одним цветом статус не обозначаем: так его различат и дальтоники.
- */
+
 export type StatusTone = 'done' | 'review' | 'returned' | 'failed' | 'progress' | 'idle'
 
 export const statusTone: Record<StatusTone, { label: string; icon: IconName; badge: string; node: string; text: string }> = {

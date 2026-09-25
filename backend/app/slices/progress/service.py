@@ -20,10 +20,9 @@ from app.models.submission import CheckType, Submission, SubmissionStatus
 from app.models.user import User
 from app.steps import registry
 
-# Работа на ручной проверке не блокирует путь: ученик идёт дальше, пока куратор смотрит работу.
-# Возвращённая работа тоже не блокирует — её дорабатывают параллельно, она видна как «Возвращено».
+
 PASSABLE = (StepProgressStatus.passed, StepProgressStatus.submitted, StepProgressStatus.returned)
-# День активности считаем по времени Чувашии (МСК)
+
 TZ = ZoneInfo("Europe/Moscow")
 
 
@@ -207,8 +206,6 @@ def get_course_or_404(db: Session, course_id: uuid.UUID) -> Course:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Course not found")
     return course
 
-
-# ---------- Серия дней и место в группе ----------
 
 
 def _local_day(dt: datetime | None) -> date | None:

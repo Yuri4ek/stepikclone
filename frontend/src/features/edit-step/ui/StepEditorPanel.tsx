@@ -6,7 +6,7 @@ import { stepEditorApi } from '../api/stepEditorApi'
 
 interface Props {
   type: StepTypeDef
-  /** Существующий шаг или null для нового */
+
   step: AdminStep | null
   lessonId: string
   nextPosition: number

@@ -91,7 +91,7 @@ def mine(db: Session, user: User) -> QuestionListOut:
 
 def inbox(db: Session, user: User, status_filter: str | None, course_id: uuid.UUID | None) -> QuestionListOut:
     allowed = _staff_courses(db, user)
-    # Сначала открытые, среди них — кто ждёт дольше
+
     q = _query().order_by(StepQuestion.status.asc(), StepQuestion.created_at.asc())
     if allowed is not None:
         if not allowed:

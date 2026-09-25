@@ -2,7 +2,7 @@ export function hoursSince(iso: string): number {
   return (Date.now() - new Date(iso).getTime()) / 36e5
 }
 
-/** Сколько ждёт работа: «48 м», «2 ч 40 м», «1 д 3 ч» */
+
 export function waitLabel(iso: string): string {
   const mins = Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 60000))
   if (mins < 60) return `${mins} м`
@@ -11,7 +11,7 @@ export function waitLabel(iso: string): string {
   return `${Math.floor(h / 24)} д ${h % 24} ч`
 }
 
-/** «сегодня», «вчера», «3 дня назад» */
+
 export function relativeDay(iso: string | null | undefined): string {
   if (!iso) return ''
   const d = new Date(iso)

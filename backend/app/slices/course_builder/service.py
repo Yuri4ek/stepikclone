@@ -319,7 +319,7 @@ def unenroll_student(db: Session, course_id: uuid.UUID, user_id: uuid.UUID) -> N
     enrollment = progress_service.get_enrollment(db, user_id, course_id)
     if enrollment is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Student is not enrolled")
-    # Прогресс по шагам остаётся в step_progress: если ученика вернут на курс, он продолжит с того же места
+
     db.delete(enrollment)
     db.commit()
 

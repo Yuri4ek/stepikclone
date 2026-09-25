@@ -13,7 +13,7 @@ const statuses: StatusTone[] = ['done', 'review', 'returned', 'failed', 'progres
 export function LandingPage() {
   return (
     <div className="space-y-16">
-      {/* Первый экран — «Ночь» со свечением */}
+      {}
       <section className="night-glow overflow-hidden rounded-card px-6 py-14 text-white sm:px-12 sm:py-20">
         <div className="inline-flex items-center gap-2 rounded-full border border-white/15 px-4 py-1.5 text-xs font-semibold tracking-wider uppercase">
           <span className="size-1.5 rounded-full bg-brand-amber" aria-hidden />
