@@ -69,8 +69,8 @@ export function stepTypesForKind(kind: StepKind): StepTypeDef[] {
 }
 
 export const checkLabels: Record<StepTypeDef['check'], string> = {
-  none: 'Без проверки',
+  none: 'Основа курса',
   auto: 'Автопроверка',
   tests: 'Тесты + куратор',
-  manual: 'Проверяет куратор',
+  manual: 'Ручная проверка',
 }

@@ -1,5 +1,6 @@
 import type { FC } from 'react'
 import type { Answers, LearningStep, StepContent, StepKind } from '@/shared/api'
+import type { IconName } from '@/shared/ui'
 
 /** tests — прогон по тестам сразу у ученика + подтверждение куратором */
 export type CheckMode = 'none' | 'auto' | 'tests' | 'manual'
@@ -38,9 +39,8 @@ export interface StepTypeDef {
   label: string
   /** Для админа: когда использовать */
   description: string
-  icon: string
-  /** Цвет плашки (из step.* палитры) */
-  color: string
+  /** Линейная иконка 24 px; отдельный цвет типу не нужен (брендбук, раздел 05) */
+  icon: IconName
   check: CheckMode
   defaultMaxScore: number
   defaultContent: () => StepContent

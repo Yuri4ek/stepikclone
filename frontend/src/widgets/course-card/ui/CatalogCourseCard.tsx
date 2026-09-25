@@ -3,7 +3,7 @@ import { CourseCard } from '@/entities/course'
 import { useUser } from '@/entities/session'
 import { useEnrollCourse } from '@/features/enroll-course'
 import type { CatalogCourse } from '@/shared/api'
-import { Button, ButtonLink, ErrorBox } from '@/shared/ui'
+import { Button, ButtonLink, ErrorBox, Icon } from '@/shared/ui'
 
 /** Карточка курса в каталоге: ученик может записаться, остальные — посмотреть программу */
 export function CatalogCourseCard({ course, onEnrolled }: { course: CatalogCourse; onEnrolled?: () => void }) {
@@ -28,11 +28,12 @@ export function CatalogCourseCard({ course, onEnrolled }: { course: CatalogCours
         course.enrollment ? (
           <ButtonLink to={`/courses/${course.id}`} className="flex-1">
             Продолжить
+            <Icon name="arrowRight" size={18} />
           </ButtonLink>
         ) : user.role === 'student' ? (
           <>
             <Button onClick={enroll} loading={busy} className="flex-1">
-              Записаться
+              Начать курс
             </Button>
             <ButtonLink to={`/courses/${course.id}`} variant="secondary">
               Программа

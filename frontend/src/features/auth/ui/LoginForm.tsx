@@ -32,13 +32,13 @@ export function LoginForm() {
           <Input type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
         </Field>
         {error && <ErrorBox error={error instanceof ApiError && error.status === 401 ? 'Неверный email или пароль' : error} />}
-        <Button type="submit" loading={busy} className="w-full py-3">
+        <Button type="submit" loading={busy} className="w-full">
           Войти
         </Button>
       </form>
 
       <div className="mt-8">
-        <div className="mb-3 text-sm font-medium text-content-secondary">Демо-доступ · пароль demo1234</div>
+        <div className="eyebrow mb-3 text-brand-ink-3">Демо-доступ · пароль demo1234</div>
         <div className="grid gap-2">
           {DEMO.map((d) => (
             <button
@@ -46,7 +46,7 @@ export function LoginForm() {
               type="button"
               disabled={busy}
               onClick={() => void run(() => login(d.email, 'demo1234'))}
-              className="glass flex items-center justify-between rounded-2xl px-4 py-3 text-left text-sm transition-transform hover:-translate-y-0.5"
+              className="flex items-center justify-between rounded-btn border border-brand-line bg-white px-4 py-3 text-left text-sm transition-colors hover:border-brand-blue-200 hover:bg-brand-blue-50"
             >
               <span>{d.email}</span>
               <RoleBadge role={d.role} />

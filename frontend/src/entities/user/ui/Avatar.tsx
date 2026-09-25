@@ -1,15 +1,20 @@
 import type { Role } from '@/shared/api'
 import { cx } from '@/shared/lib'
-import { roleMeta } from '../model/roleMeta'
 
-export function Avatar({ name, role, size = 'md' }: { name: string; role: Role; size?: 'md' | 'lg' }) {
+/** Инициалы в круге «Синий 50» */
+export function Avatar({ name, size = 'md' }: { name: string; role?: Role; size?: 'sm' | 'md' | 'lg' }) {
+  const initials = name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase())
+    .join('')
   return (
     <span
-      className={cx('flex shrink-0 items-center justify-center rounded-full font-medium text-white shadow-md', size === 'lg' ? 'size-20 text-3xl' : 'size-10 text-sm')}
-      style={{ backgroundImage: roleMeta[role].gradient }}
+      className={cx('flex shrink-0 items-center justify-center rounded-full bg-brand-blue-50 font-bold text-brand-blue', size === 'lg' ? 'size-20 text-2xl' : size === 'sm' ? 'size-8 text-xs' : 'size-10 text-sm')}
       aria-hidden
     >
-      {name.slice(0, 1)}
+      {initials}
     </span>
   )
 }

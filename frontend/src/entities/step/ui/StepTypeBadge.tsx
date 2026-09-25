@@ -1,26 +1,22 @@
 import { cx } from '@/shared/lib'
+import { Icon } from '@/shared/ui'
 import type { StepTypeDef } from '../model/types'
 
+/** Тип шага — только иконка и название, без собственного цвета (раздел 05) */
 export function StepTypeBadge({ type, className }: { type: StepTypeDef; className?: string }) {
   return (
-    <span
-      className={cx('inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium whitespace-nowrap', className)}
-      style={{ backgroundColor: `${type.color}1F`, color: type.color }}
-    >
-      <span aria-hidden>{type.icon}</span>
+    <span className={cx('inline-flex items-center gap-1.5 text-sm font-semibold whitespace-nowrap text-brand-ink-2', className)}>
+      <Icon name={type.icon} size={16} className="text-brand-blue" />
       {type.label}
     </span>
   )
 }
 
+/** Иконка типа в синем квадрате */
 export function StepTypeIcon({ type, size = 'md' }: { type: StepTypeDef; size?: 'sm' | 'md' }) {
   return (
-    <span
-      className={cx('inline-flex shrink-0 items-center justify-center', size === 'sm' ? 'size-9 rounded-xl text-base' : 'size-12 rounded-2xl text-xl')}
-      style={{ backgroundImage: `linear-gradient(135deg, ${type.color}33, ${type.color}14)`, color: type.color }}
-      aria-hidden
-    >
-      {type.icon}
+    <span className={cx('inline-flex shrink-0 items-center justify-center bg-brand-blue-50 text-brand-blue', size === 'sm' ? 'size-9 rounded-[10px]' : 'size-12 rounded-btn')} aria-hidden>
+      <Icon name={type.icon} size={size === 'sm' ? 18 : 24} />
     </span>
   )
 }

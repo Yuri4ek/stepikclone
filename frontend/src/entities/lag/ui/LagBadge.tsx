@@ -1,11 +1,6 @@
-import type { LagLevel } from '@/shared/api'
-import { Badge } from '@/shared/ui'
-import { lagMeta } from '../model/lagMeta'
+import { Dot } from '@/shared/ui'
+import { lagMeta, type LagState } from '../model/lagMeta'
 
-export function LagBadge({ level }: { level: LagLevel }) {
-  return (
-    <Badge color={lagMeta[level].color}>
-      {lagMeta[level].icon} {lagMeta[level].label}
-    </Badge>
-  )
+export function LagBadge({ level }: { level: LagState }) {
+  return <Dot className={lagMeta[level].cls}>{lagMeta[level].label}</Dot>
 }

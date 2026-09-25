@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { StepTypeBadge, checkLabels, type StepTypeDef } from '@/entities/step'
 import type { AdminStep, LearningStep, StepContent } from '@/shared/api'
-import { Button, Card, ErrorBox, Field, Input, Notice, Segmented } from '@/shared/ui'
+import { Button, Card, ErrorBox, Field, Icon, Input, Notice, Segmented } from '@/shared/ui'
 import { stepEditorApi } from '../api/stepEditorApi'
 
 interface Props {
@@ -72,11 +72,11 @@ export function StepEditorPanel({ type, step, lessonId, nextPosition, onSaved, o
   }
 
   return (
-    <Card accent={type.color}>
-      <div className="flex flex-wrap items-center gap-2 px-6 pt-5">
+    <Card>
+      <div className="flex flex-wrap items-center gap-3 border-b border-brand-line px-6 py-4">
         <StepTypeBadge type={type} />
-        <span className="text-xs text-content-secondary">
-          {checkLabels[type.check]} · kind: <code>{type.kind}</code>
+        <span className="eyebrow text-brand-ink-3">
+          {checkLabels[type.check]} · kind <code className="font-mono normal-case">{type.kind}</code>
         </span>
         <Segmented
           className="ml-auto"
@@ -104,14 +104,15 @@ export function StepEditorPanel({ type, step, lessonId, nextPosition, onSaved, o
               )}
             </div>
             <label className="flex items-center gap-2 text-sm">
-              <input type="checkbox" checked={required} onChange={(e) => setRequired(e.target.checked)} className="size-4 accent-brand" />
+              <input type="checkbox" checked={required} onChange={(e) => setRequired(e.target.checked)} className="size-4 accent-[#3457F0]" />
               Обязательный шаг (учитывается в проценте прохождения)
             </label>
             <type.Editor content={content} onChange={setContent} />
           </>
         ) : (
-          <div className="rounded-3xl bg-white/80 p-6 shadow-inner">
-            <h2 className="mb-4 text-xl font-medium">{title}</h2>
+          <div className="role-student rounded-card border border-brand-line bg-brand-mist p-6">
+            <div className="eyebrow mb-2 text-brand-ink-3">Так шаг увидит ученик</div>
+            <h2 className="mb-4 text-[28px] font-extrabold tracking-tight">{title}</h2>
             <type.Player step={previewStep(type, title, maxScore, content)} content={previewStep(type, title, maxScore, content).content} busy={false} canSubmit={false} submit={() => {}} complete={() => {}} />
           </div>
         )}
@@ -124,9 +125,15 @@ export function StepEditorPanel({ type, step, lessonId, nextPosition, onSaved, o
           <Button variant="ghost" onClick={onCancel}>
             {step ? 'Закрыть' : 'Отмена'}
           </Button>
-          {saved && <span className="text-sm text-status-success">✓ Сохранено</span>}
+          {saved && (
+            <span className="inline-flex items-center gap-1 text-sm font-semibold text-st-done">
+              <Icon name="check" size={16} strokeWidth={2.4} />
+              Сохранено
+            </span>
+          )}
           {step && (
-            <Button variant="ghost" className="ml-auto !text-status-error" onClick={remove} loading={busy === 'delete'}>
+            <Button variant="danger" className="ml-auto" onClick={remove} loading={busy === 'delete'}>
+              <Icon name="trash" size={16} />
               Удалить шаг
             </Button>
           )}

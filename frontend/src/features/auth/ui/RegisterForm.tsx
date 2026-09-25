@@ -27,10 +27,10 @@ export function RegisterForm() {
         <Input type="password" autoComplete="new-password" minLength={6} required value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
       </Field>
       {error && <ErrorBox error={error instanceof ApiError && error.status === 409 ? 'Такой email уже зарегистрирован' : error} />}
-      <Button type="submit" loading={busy} className="w-full py-3">
+      <Button type="submit" loading={busy} className="w-full">
         Создать аккаунт
       </Button>
-      <p className="text-xs text-content-secondary">Используйте только вымышленные данные — платформа работает в демонстрационном режиме.</p>
+      <p className="text-xs text-brand-ink-3">На стенде используй только вымышленные имя и почту — это демонстрационная версия.</p>
     </form>
   )
 }

@@ -1,6 +1,7 @@
 import { useState } from 'react'
+import { LagBadge, lagApi } from '@/entities/lag'
 import { useUser } from '@/entities/session'
-import { QueueRow, submissionApi } from '@/entities/submission'
+import { QueueTable, submissionApi } from '@/entities/submission'
 import { CourseFilter } from '@/features/filter-by-course'
 import { useAsync } from '@/shared/lib'
 import { Card, EmptyState, ErrorBox, Loader, PageHeader, Pager } from '@/shared/ui'
@@ -12,12 +13,15 @@ export function QueuePage() {
   const [courseId, setCourseId] = useState('')
   const [offset, setOffset] = useState(0)
   const { data, error, loading, reload } = useAsync(() => submissionApi.queue({ course_id: courseId || undefined, limit: LIMIT, offset }), [courseId, offset])
+  // Уровень отставания рядом с именем: куратор сразу видит, чью работу проверить в первую очередь
+  const lag = useAsync(() => lagApi.students({ limit: 100 }), [])
+  const lagMap = new Map((lag.data?.items ?? []).map((i) => [`${i.student.id}:${i.course_id}`, i.lag_level]))
 
   return (
     <>
       <PageHeader
         title="Очередь проверки"
-        subtitle={data ? `Ожидают проверки: ${data.total}` : 'Работы, которые нельзя проверить автоматически'}
+        subtitle={data ? `Ждут проверки: ${data.total}. Сначала — те, кто ждёт дольше` : 'Работы, которые нельзя проверить автоматически'}
         actions={
           <CourseFilter
             role={user.role}
@@ -33,14 +37,12 @@ export function QueuePage() {
       {loading && !data && <Loader />}
       {data &&
         (data.items.length === 0 ? (
-          <EmptyState icon="✅" title="Очередь пуста">
-            Все работы проверены. Новые появятся здесь автоматически.
+          <EmptyState icon="check" title="Очередь пуста. Все работы проверены.">
+            Новые работы появятся здесь автоматически.
           </EmptyState>
         ) : (
-          <Card className="flex flex-col gap-1 p-2">
-            {data.items.map((it) => (
-              <QueueRow key={it.submission_id} item={it} />
-            ))}
+          <Card className="overflow-hidden">
+            <QueueTable items={data.items} studentMeta={(it) => (lag.data ? <LagBadge level={lagMap.get(`${it.student.id}:${it.course_id}`) ?? 'ok'} /> : null)} />
           </Card>
         ))}
       {data && <Pager total={data.total} limit={LIMIT} offset={offset} onChange={setOffset} />}

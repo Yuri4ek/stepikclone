@@ -7,10 +7,9 @@ import type { StepTypeDef } from '../../model/types'
 export const projectStep: StepTypeDef = {
   id: 'project',
   kind: 'task',
-  label: 'Проект / работа',
-  description: 'Открытое задание: текстовый ответ, файл или ссылка на результат. Проверяет куратор.',
-  icon: '📎',
-  color: '#DB2777',
+  label: 'Проект',
+  description: 'Файл или ссылка на результат, уходит куратору в очередь.',
+  icon: 'upload',
   check: 'manual',
   defaultMaxScore: 20,
   defaultContent: () => ({ type: 'project', markdown: '', answer_format: 'text', criteria: '' }),
@@ -44,7 +43,7 @@ export const projectStep: StepTypeDef = {
           linkLabel={format === 'text' ? undefined : 'Ссылка на файл или результат'}
           linkPlaceholder="https://disk.yandex.ru/…"
           linkRequired={format === 'link'}
-          textLabel={format === 'link' ? 'Комментарий (необязательно)' : 'Ответ'}
+          textLabel={format === 'link' ? 'Комментарий (можно не заполнять)' : 'Ответ'}
         />
       </div>
     )

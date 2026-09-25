@@ -18,7 +18,7 @@ export function RequireAuth() {
 export function RequireRole({ roles }: { roles: Role[] }) {
   const { user } = useAuth()
   if (!user || !roles.includes(user.role)) {
-    return <EmptyState icon="🚫" title="Нет доступа">Этот раздел доступен другой роли.</EmptyState>
+    return <EmptyState icon="lock" title="Нет доступа">Этот раздел открыт для другой роли.</EmptyState>
   }
   return <Outlet />
 }

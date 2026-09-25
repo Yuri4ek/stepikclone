@@ -4,7 +4,7 @@ import { lessonStats } from '@/entities/course'
 import { StatusBadge, StepTypeIcon, resolveStepType } from '@/entities/step'
 import type { Outline, OutlineStep } from '@/shared/api'
 import { cx, formatScore } from '@/shared/lib'
-import { Card, ScorePill } from '@/shared/ui'
+import { Card, Icon } from '@/shared/ui'
 
 export function StepRow({ step, courseId, enrolled, current }: { step: OutlineStep; courseId: string; enrolled: boolean; current?: boolean }) {
   const type = resolveStepType(step.kind, null, step.id)
@@ -13,26 +13,28 @@ export function StepRow({ step, courseId, enrolled, current }: { step: OutlineSt
     <>
       <StepTypeIcon type={type} size="sm" />
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-sm font-medium">{step.title}</span>
-        <span className="text-xs text-content-secondary">
+        <span className={cx('block truncate font-semibold', current && 'text-brand-blue')}>{step.title}</span>
+        <span className="text-sm text-brand-ink-3">
           {type.label}
-          {step.max_score > 0 && ` · до ${formatScore(step.max_score)} баллов`}
-          {!step.is_required && ' · необязательный'}
+          {step.max_score > 0 && (
+            <>
+              {' · '}
+              <span className="num">
+                {step.progress.score !== null ? `${formatScore(step.progress.score)} из ${formatScore(step.max_score)}` : `до ${formatScore(step.max_score)}`} баллов
+              </span>
+            </>
+          )}
+          {!step.is_required && ' · по желанию'}
         </span>
       </span>
-      {step.progress.score !== null && step.max_score > 0 && (
-        <ScorePill>
-          {formatScore(step.progress.score)}/{formatScore(step.max_score)}
-        </ScorePill>
-      )}
       {enrolled && <StatusBadge status={step.progress.status} />}
     </>
   )
-  const cls = cx('flex items-center gap-3 rounded-2xl px-3 py-2.5 transition-colors', current && 'bg-brand/10')
+  const cls = cx('flex items-center gap-3 rounded-btn px-3 py-2.5 transition-colors', current && 'bg-brand-blue-50')
   return locked ? (
-    <div className={cx(cls, 'opacity-60')}>{inner}</div>
+    <div className={cls}>{inner}</div>
   ) : (
-    <Link to={`/courses/${courseId}/steps/${step.id}`} className={cx(cls, 'hover:bg-brand/5')}>
+    <Link to={`/courses/${courseId}/steps/${step.id}`} className={cx(cls, !current && 'hover:bg-brand-mist')}>
       {inner}
     </Link>
   )
@@ -44,9 +46,9 @@ export function OutlineTree({ outline, enrolled, currentId }: { outline: Outline
     <div className="space-y-4">
       {outline.modules.map((m, mi) => (
         <Card key={m.id}>
-          <div className="px-6 pt-6 pb-2">
-            <div className="text-sm text-brand-violet">Модуль {mi + 1}</div>
-            <h2 className="text-xl font-medium">{m.title}</h2>
+          <div className="px-5 pt-5 pb-1">
+            <div className="eyebrow text-brand-blue">Модуль {mi + 1}</div>
+            <h2 className="mt-1 text-xl font-bold">{m.title}</h2>
           </div>
           <div className="space-y-1 p-2">
             {m.lessons.map((l, li) => {
@@ -54,24 +56,24 @@ export function OutlineTree({ outline, enrolled, currentId }: { outline: Outline
               const open = !collapsed[l.id]
               return (
                 <div key={l.id}>
-                  <button className="flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left hover:bg-brand/5" onClick={() => setCollapsed({ ...collapsed, [l.id]: open })} aria-expanded={open}>
-                    <span className={cx('flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-medium', st.done ? 'bg-gradient-to-br from-emerald-400 to-teal-500 text-white' : 'bg-brand/10 text-brand')}>
-                      {st.done ? '✓' : `${mi + 1}.${li + 1}`}
+                  <button className="flex w-full items-center gap-3 rounded-btn px-3 py-3 text-left hover:bg-brand-mist" onClick={() => setCollapsed({ ...collapsed, [l.id]: open })} aria-expanded={open}>
+                    <span className={cx('num flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-bold', st.done ? 'bg-st-done text-white' : 'bg-st-idle-bg text-brand-ink-2')}>
+                      {st.done ? <Icon name="check" size={16} strokeWidth={2.4} /> : `${mi + 1}.${li + 1}`}
                     </span>
-                    <span className="flex-1 font-medium">{l.title}</span>
+                    <span className="flex-1 font-semibold">{l.title}</span>
                     {enrolled && (
-                      <span className="text-xs text-content-secondary">
-                        {st.passed}/{st.total}
+                      <span className="num text-sm text-brand-ink-3">
+                        {st.passed} из {st.total}
                       </span>
                     )}
-                    <span className={cx('text-content-secondary transition-transform', open && 'rotate-90')}>›</span>
+                    <Icon name="chevronRight" size={18} className={cx('text-brand-ink-3 transition-transform', open && 'rotate-90')} />
                   </button>
                   {open && (
-                    <div className="space-y-0.5 px-1 pb-2">
+                    <div className="space-y-0.5 pb-2 pl-2">
                       {l.steps.map((s) => (
                         <StepRow key={s.id} step={s} courseId={outline.course.id} enrolled={enrolled} current={s.id === currentId} />
                       ))}
-                      {l.steps.length === 0 && <div className="px-3 py-2 text-sm text-content-secondary">В уроке пока нет шагов</div>}
+                      {l.steps.length === 0 && <div className="px-3 py-2 text-sm text-brand-ink-3">В уроке пока нет шагов</div>}
                     </div>
                   )}
                 </div>

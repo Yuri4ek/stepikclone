@@ -1,5 +1,6 @@
 import { Route, Routes } from 'react-router-dom'
 import { AdminCoursesPage } from '@/pages/admin-courses'
+import { AdminUsersPage } from '@/pages/admin-users'
 import { LoginPage, RegisterPage } from '@/pages/auth'
 import { CatalogPage } from '@/pages/catalog'
 import { CoursePage } from '@/pages/course'
@@ -57,6 +58,7 @@ export function AppRouter() {
           <Route element={<RequireRole roles={['admin']} />}>
             <Route path="admin" element={<AdminCoursesPage />} />
             <Route path="admin/courses/:courseId" element={<CourseBuilderPage />} />
+            <Route path="admin/users" element={<AdminUsersPage />} />
           </Route>
 
           <Route path="*" element={<NotFoundPage />} />

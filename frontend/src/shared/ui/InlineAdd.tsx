@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { cx } from '../lib/cx'
 import { Button } from './Button'
 import { Input } from './form'
+import { Icon } from './Icon'
 
 /** Поле ввода, которое появляется по кнопке: для добавления модуля / урока */
 export function InlineAdd({ label, placeholder, onAdd, small }: { label: string; placeholder: string; onAdd: (title: string) => Promise<void>; small?: boolean }) {
@@ -10,8 +11,12 @@ export function InlineAdd({ label, placeholder, onAdd, small }: { label: string;
   const [busy, setBusy] = useState(false)
   if (!open)
     return (
-      <button onClick={() => setOpen(true)} className={cx('w-full rounded-full bg-brand/6 text-left font-medium text-brand transition-colors hover:bg-brand/12', small ? 'px-4 py-2 text-xs' : 'px-5 py-3 text-sm')}>
-        + {label}
+      <button
+        onClick={() => setOpen(true)}
+        className={cx('flex w-full items-center gap-1.5 rounded-btn border border-dashed border-brand-line text-left font-semibold text-brand-blue transition-colors hover:border-brand-blue-200 hover:bg-brand-blue-50', small ? 'px-3 py-1.5 text-xs' : 'px-4 py-2.5 text-sm')}
+      >
+        <Icon name="plus" size={small ? 14 : 16} />
+        {label}
       </button>
     )
   return (
@@ -31,7 +36,7 @@ export function InlineAdd({ label, placeholder, onAdd, small }: { label: string;
       }}
     >
       <Input autoFocus value={value} onChange={(e) => setValue(e.target.value)} placeholder={placeholder} onKeyDown={(e) => e.key === 'Escape' && setOpen(false)} />
-      <Button type="submit" size="sm" loading={busy}>
+      <Button type="submit" size="sm" loading={busy} className="h-auto">
         OK
       </Button>
     </form>

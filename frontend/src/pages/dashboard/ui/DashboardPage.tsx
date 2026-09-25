@@ -1,76 +1,53 @@
-import { courseApi, courseCoverStyle } from '@/entities/course'
+import { Link } from 'react-router-dom'
+import { courseApi, flattenOutline, sortOutline, type FlatStep } from '@/entities/course'
 import { useUser } from '@/entities/session'
-import { StepTypeBadge, resolveStepType } from '@/entities/step'
+import { stepApi } from '@/entities/step'
 import { CatalogCourseCard } from '@/widgets/course-card'
-import type { CatalogCourse, NextStep } from '@/shared/api'
+import { NextStepCard } from '@/widgets/next-step'
+import type { CatalogCourse } from '@/shared/api'
 import { formatPercent, useAsync } from '@/shared/lib'
-import { ButtonLink, Card, EmptyState, ErrorBox, Loader, ProgressBar, ScorePill } from '@/shared/ui'
+import { EmptyState, ErrorBox, Icon, Loader, ProgressBar, SectionLabel, StatusPill } from '@/shared/ui'
 
 interface MyCourse {
   course: CatalogCourse
-  next: NextStep | null
+  steps: FlatStep[]
+  current: FlatStep | null
+  returned: { step: FlatStep; feedback: string | null }[]
+}
+
+async function loadMyCourse(course: CatalogCourse): Promise<MyCourse> {
+  const [outline, next] = await Promise.all([courseApi.outline(course.id), courseApi.next(course.id).catch(() => null)])
+  const steps = flattenOutline(sortOutline(outline))
+  // Текущий шаг берём у бэкенда (/next), номер и статус — из оглавления
+  const current = next?.current_step ? (steps.find((s) => s.id === next.current_step!.id) ?? null) : (steps.find((s) => s.progress.status !== 'passed') ?? null)
+  const returnedSteps = steps.filter((s) => s.progress.status === 'returned').slice(0, 3)
+  const feedback = await Promise.all(returnedSteps.map((s) => stepApi.get(s.id).then((d) => d.progress.feedback).catch(() => null)))
+  return { course, steps, current, returned: returnedSteps.map((step, i) => ({ step, feedback: feedback[i] })) }
 }
 
 async function loadDashboard() {
   const catalog = await courseApi.catalog()
-  const mine = catalog.items.filter((c) => c.enrollment)
-  const nexts = await Promise.all(mine.map((c) => courseApi.next(c.id).catch(() => null)))
-  return {
-    mine: mine.map<MyCourse>((course, i) => ({ course, next: nexts[i] })),
-    others: catalog.items.filter((c) => !c.enrollment),
-  }
+  const mineRaw = catalog.items.filter((c) => c.enrollment)
+  const mine = await Promise.all(mineRaw.map(loadMyCourse))
+  return { mine, others: catalog.items.filter((c) => !c.enrollment) }
 }
 
-function ContinueCard({ course, next }: MyCourse) {
-  const e = course.enrollment!
-  const step = next?.current_step
-  const type = step ? resolveStepType(step.kind, null, step.id) : null
-  const done = next && !step
+function CourseProgressRow({ m }: { m: MyCourse }) {
+  const passed = m.steps.filter((s) => s.progress.status === 'passed').length
   return (
-    <Card className="overflow-hidden">
-      <div className="flex flex-col sm:flex-row">
-        <div className="relative m-2 shrink-0 overflow-hidden rounded-[22px] p-6 text-white sm:w-60" style={courseCoverStyle(course)}>
-          <div className="absolute -right-10 -bottom-10 size-40 rounded-full bg-white/20 blur-2xl" aria-hidden />
-          <div className="text-sm opacity-80">Курс</div>
-          <div className="mt-1 text-lg leading-snug font-medium">{course.title}</div>
-          <div className="mt-4 text-3xl font-medium">{formatPercent(next?.percent ?? e.percent)}</div>
-          <div className="text-xs opacity-80">курса пройдено</div>
-        </div>
-        <div className="flex flex-1 flex-col gap-4 p-5 sm:p-6">
-          <div className="flex items-center justify-between gap-3">
-            <ProgressBar value={next?.percent ?? e.percent} className="flex-1" />
-            <ScorePill>{Math.round(e.rating_score)} баллов рейтинга</ScorePill>
-          </div>
-          {done ? (
-            <div className="flex-1">
-              <div className="text-lg font-medium text-status-success">🏆 {next.message}</div>
-              <p className="text-sm text-content-secondary">Посмотрите, из чего сложился ваш рейтинг.</p>
-            </div>
-          ) : step && type ? (
-            <div className="flex-1">
-              <div className="text-sm text-content-secondary">Что делать дальше</div>
-              <div className="mt-1 flex flex-wrap items-center gap-2">
-                <span className="text-lg font-medium">{step.title}</span>
-                <StepTypeBadge type={type} />
-              </div>
-              <p className="mt-1 text-sm text-content-secondary">{step.action_hint}</p>
-            </div>
-          ) : (
-            <div className="flex-1 text-sm text-content-secondary">{next?.message ?? 'Откройте курс, чтобы продолжить'}</div>
-          )}
-          <div className="flex flex-wrap gap-2">
-            {step ? (
-              <ButtonLink to={`/courses/${course.id}/steps/${step.id}`}>Продолжить →</ButtonLink>
-            ) : (
-              <ButtonLink to={`/courses/${course.id}`}>Открыть курс</ButtonLink>
-            )}
-            <ButtonLink to={`/courses/${course.id}/progress`} variant="secondary">
-              Мой рейтинг
-            </ButtonLink>
-          </div>
-        </div>
+    <Link to={`/courses/${m.course.id}`} className="block rounded-card border border-brand-line bg-white p-5 transition-colors hover:border-brand-blue-200">
+      <div className="flex items-baseline justify-between gap-3">
+        <span className="font-bold">{m.course.title}</span>
+        <span className="num shrink-0 text-brand-ink-2">
+          {passed} из {m.steps.length}
+        </span>
       </div>
-    </Card>
+      <ProgressBar value={m.course.enrollment!.percent} className="mt-3" />
+      <div className="mt-2 flex justify-between gap-3 text-sm text-brand-ink-3">
+        <span className="truncate">{m.current ? `Дальше: ${m.current.title}` : 'Курс пройден'}</span>
+        <span className="num shrink-0">{formatPercent(m.course.enrollment!.percent)}</span>
+      </div>
+    </Link>
   )
 }
 
@@ -79,40 +56,62 @@ export function DashboardPage() {
   const { data, error, loading, reload } = useAsync(loadDashboard, [])
   const firstName = user.full_name.split(' ')[0]
 
+  if (loading && !data) return <Loader />
+  if (error) return <ErrorBox error={error} onRetry={reload} />
+  if (!data) return null
+
+  // Главный курс — первый незавершённый; если все пройдены — первый
+  const main = data.mine.find((m) => m.current) ?? data.mine[0]
+  const returned = data.mine.flatMap((m) => m.returned.map((r) => ({ ...r, course: m.course })))
+
   return (
     <div className="space-y-10">
-      <section>
-        <h1 className="text-3xl font-medium tracking-tight sm:text-4xl">Привет, <span className="text-brand-gradient">{firstName}</span>! 👋</h1>
-        <p className="mt-1 text-content-secondary">Здесь всегда видно, где вы в курсе и какой шаг следующий.</p>
-      </section>
+      <div>
+        <h1 className="text-[36px] leading-tight font-extrabold tracking-tight">Привет, {firstName}!</h1>
+        <p className="mt-1 text-brand-ink-2">{main ? 'Вот что делать дальше.' : 'Выбери курс, и начнём с первого шага.'}</p>
+      </div>
 
-      {loading && !data && <Loader />}
-      {error && <ErrorBox error={error} onRetry={reload} />}
+      {main ? (
+        <div className="grid items-start gap-6 lg:grid-cols-[1.4fr_1fr]">
+          <NextStepCard courseId={main.course.id} courseTitle={main.course.title} step={main.current} total={main.steps.length} />
+          <div className="space-y-4">
+            {returned.map((r) => (
+              <Link key={r.step.id} to={`/courses/${r.course.id}/steps/${r.step.id}`} className="block rounded-card border border-brand-amber/30 bg-brand-amber-50 p-5 text-brand-night transition-colors hover:border-brand-amber">
+                <StatusPill tone="returned" />
+                <p className="mt-3">
+                  <b>«{r.step.title}»</b>
+                  {r.feedback ? `: «${r.feedback}»` : ' — куратор оставил комментарий на шаге.'}
+                </p>
+                <span className="mt-2 inline-flex items-center gap-1 font-semibold text-brand-amber-text">
+                  Поправить
+                  <Icon name="arrowRight" size={16} />
+                </span>
+              </Link>
+            ))}
+            {data.mine.map((m) => (
+              <CourseProgressRow key={m.course.id} m={m} />
+            ))}
+            <Link to="/history" className="flex items-center justify-between rounded-card border border-brand-line bg-white px-5 py-4 font-semibold transition-colors hover:border-brand-blue-200">
+              Мои работы и оценки
+              <Icon name="chevronRight" size={18} className="text-brand-ink-3" />
+            </Link>
+          </div>
+        </div>
+      ) : (
+        <EmptyState icon="flag" title="У тебя пока нет курсов">
+          Выбери курс ниже — прогресс и баллы появятся сразу после первого шага.
+        </EmptyState>
+      )}
 
-      {data && (
-        <>
-          <section className="space-y-4">
-            <h2 className="text-xl font-medium">Мои курсы</h2>
-            {data.mine.length === 0 ? (
-              <EmptyState icon="🚀" title="Вы пока не записаны ни на один курс">
-                Выберите курс ниже — и начинайте с первого шага.
-              </EmptyState>
-            ) : (
-              data.mine.map((m) => <ContinueCard key={m.course.id} {...m} />)
-            )}
-          </section>
-
-          {data.others.length > 0 && (
-            <section className="space-y-4">
-              <h2 className="text-xl font-medium">Доступные курсы</h2>
-              <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                {data.others.map((c) => (
-                  <CatalogCourseCard key={c.id} course={c} onEnrolled={reload} />
-                ))}
-              </div>
-            </section>
-          )}
-        </>
+      {data.others.length > 0 && (
+        <section>
+          <SectionLabel>Можно начать</SectionLabel>
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {data.others.map((c) => (
+              <CatalogCourseCard key={c.id} course={c} onEnrolled={reload} />
+            ))}
+          </div>
+        </section>
       )}
     </div>
   )

@@ -1,94 +1,87 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { courseApi, flattenOutline, sortOutline, type FlatStep } from '@/entities/course'
+import { courseApi, flattenOutline, sortOutline } from '@/entities/course'
 import { useUser } from '@/entities/session'
-import { StatusBadge, StepTypeBadge, checkLabels, resolveStepType, stepApi, stepStatusMeta, type StepTypeDef } from '@/entities/step'
+import { StatusBadge, StepTypeBadge, checkLabels, resolveStepType, stepApi, type StepTypeDef } from '@/entities/step'
 import { logSubmission } from '@/entities/submission'
 import { answerApi } from '@/features/step-answer'
+import { CourseMap } from '@/widgets/course-outline'
 import { ApiError, type Answers, type LearningStep, type SubmitResult } from '@/shared/api'
-import { cx, formatScore, useAsync } from '@/shared/lib'
-import { Button, Card, ErrorBox, Loader, Notice, ProgressBar, ScorePill } from '@/shared/ui'
+import { formatScore, plural, useAsync } from '@/shared/lib'
+import { Button, Card, ErrorBox, Icon, Loader, Notice, ProgressBar, ScorePill, StatusPill } from '@/shared/ui'
 
 type LastResult = { kind: 'submit'; data: SubmitResult } | { kind: 'complete' }
 
-function StepStrip({ steps, currentId, courseId }: { steps: FlatStep[]; currentId: string; courseId: string }) {
+function Points({ score, max }: { score: number | null; max: number }) {
   return (
-    <div className="flex flex-wrap gap-1.5">
-      {steps.map((s, i) => {
-        const type = resolveStepType(s.kind, null, s.id)
-        const st = s.progress.status
-        const locked = st === 'locked'
-        const current = s.id === currentId
-        const bg = st === 'passed' ? '#10B981' : st === 'returned' || st === 'failed' ? '#EF4444' : st === 'submitted' ? '#F59E0B' : undefined
-        const cls = cx(
-          'relative flex size-10 items-center justify-center rounded-2xl text-sm transition-all',
-          current ? 'scale-110 shadow-lg ring-2 ring-brand ring-offset-2 ring-offset-surface-bg' : 'hover:scale-105',
-          locked && 'cursor-not-allowed opacity-40',
-        )
-        const style = { backgroundColor: bg ?? `${type.color}24`, color: bg ? 'white' : type.color }
-        const label = `Шаг ${i + 1}: ${s.title} — ${type.label}, ${stepStatusMeta[st].label}`
-        return locked ? (
-          <span key={s.id} className={cls} style={style} title={label}>
-            {type.icon}
-          </span>
-        ) : (
-          <Link key={s.id} to={`/courses/${courseId}/steps/${s.id}`} className={cls} style={style} title={label} aria-current={current ? 'step' : undefined}>
-            {st === 'passed' ? '✓' : type.icon}
-          </Link>
-        )
-      })}
+    <ScorePill>
+      {formatScore(score)} из {formatScore(max)} {plural(Math.round(max), 'балла', 'баллов', 'баллов')}
+    </ScorePill>
+  )
+}
+
+function Comment({ text }: { text: string }) {
+  return (
+    <div className="mt-3 rounded-field bg-white p-4 whitespace-pre-wrap text-brand-ink">
+      <div className="eyebrow mb-1 flex items-center gap-1.5 text-brand-ink-3">
+        <Icon name="message" size={14} />
+        Комментарий куратора
+      </div>
+      {text}
     </div>
   )
 }
 
+/** Результат проверки. Тон — как тренер после тренировки: что получилось, что поправить, куда дальше */
 function ResultBanner({ step, type, last }: { step: LearningStep; type: StepTypeDef; last: LastResult | null }) {
   const status = step.progress.status
   const fb = step.progress.feedback
 
   if (last?.kind === 'submit' && last.data.check_type === 'auto') {
     const ok = last.data.step_status === 'passed'
-    return (
-      <Notice tone={ok ? 'success' : 'error'} className="flex flex-wrap items-center justify-between gap-2">
-        <span className="text-base font-medium">{ok ? '🎉 Верно!' : '✕ Неверно — попробуйте ещё раз'}</span>
-        <ScorePill>
-          {formatScore(last.data.score)} из {formatScore(last.data.max_score)} баллов
-        </ScorePill>
+    return ok ? (
+      <Notice tone="success" className="flex flex-wrap items-center justify-between gap-3">
+        <span className="flex items-center gap-3">
+          <StatusPill tone="done" />
+          <span className="font-semibold">Верно! Баллы уже в твоём прогрессе.</span>
+        </span>
+        <Points score={last.data.score} max={last.data.max_score} />
+      </Notice>
+    ) : (
+      <Notice tone="error">
+        <StatusPill tone="failed" label="Не прошло проверку" />
+        <p className="mt-2">Пока не совпало с ответом. Перечитай условие и попробуй ещё раз — результат будет сразу.</p>
       </Notice>
     )
   }
   if (status === 'submitted') {
     return (
-      <Notice tone="warning">
-        <div className="font-medium">⏳ Работа отправлена куратору</div>
-        <div className="mt-0.5">Проверка обычно занимает до суток. Следующий шаг откроется, когда куратор примет работу, — прогресс обновится сразу после проверки.</div>
+      <Notice tone="review">
+        <StatusPill tone="review" />
+        <p className="mt-2">Отправлено куратору. Результат и комментарий появятся здесь, а следующий шаг откроется, когда работу примут.</p>
       </Notice>
     )
   }
   if (status === 'returned') {
     return (
-      <Notice tone="error">
-        <div className="font-medium">↩ Куратор вернул работу на доработку</div>
-        {fb && <div className="mt-2 rounded-2xl bg-white/70 p-4 whitespace-pre-wrap text-content-primary">💬 {fb}</div>}
-        <div className="mt-2">Исправьте работу и отправьте снова.</div>
+      <Notice tone="warning">
+        <StatusPill tone="returned" />
+        <p className="mt-2 font-semibold">Куратор вернул работу. Поправь и отправь снова — черновик сохранился.</p>
+        {fb && <Comment text={fb} />}
       </Notice>
     )
   }
   if (status === 'passed' && type.check !== 'none') {
     return (
       <Notice tone="success">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <span className="font-medium">✓ {type.check === 'auto' ? 'Шаг пройден' : 'Работа принята куратором'}</span>
-          {step.max_score > 0 && (
-            <ScorePill>
-              {formatScore(step.progress.score)} из {formatScore(step.max_score)} баллов
-            </ScorePill>
-          )}
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <StatusBadge status="passed" checkedBy={type.check === 'auto' ? 'auto' : 'manual'} />
+          {step.max_score > 0 && <Points score={step.progress.score} max={step.max_score} />}
         </div>
-        {fb && <div className="mt-2 rounded-2xl bg-white/70 p-4 whitespace-pre-wrap text-content-primary">💬 {fb}</div>}
+        {fb && type.check !== 'auto' && <Comment text={fb} />}
       </Notice>
     )
   }
-  if (status === 'failed' && fb) return <Notice tone="error">{fb}</Notice>
   return null
 }
 
@@ -158,44 +151,54 @@ export function StepPage() {
   const st = s?.progress.status
   const canSubmit = !!s && !!type && st !== 'submitted' && st !== 'locked' && !(st === 'passed' && type.check !== 'auto')
   const coursePercent = progress.data?.percent ?? 0
+  const nextLocked = next?.progress.status === 'locked'
 
   return (
-    <div className="space-y-5">
-      {/* Шапка урока */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="min-w-0">
-          <Link to={`/courses/${courseId}`} className="text-sm text-content-secondary hover:text-brand-hover">
-            ← {outline.data?.course.title ?? 'Курс'}
+          <Link to={`/courses/${courseId}`} className="inline-flex items-center gap-1 text-sm text-brand-ink-2 hover:text-brand-blue">
+            <Icon name="arrowLeft" size={16} />
+            {outline.data?.course.title ?? 'Курс'}
           </Link>
           {current && (
-            <div className="mt-1 text-lg font-medium">
-              {current.module.title} <span className="text-content-secondary">/</span> {current.lesson.title}
+            <div className="mt-1 font-semibold text-brand-ink-2">
+              {current.module.title} · {current.lesson.title}
             </div>
           )}
         </div>
-        <div className="flex w-48 items-center gap-2">
+        <div className="flex w-56 items-center gap-3">
           <ProgressBar value={coursePercent} className="flex-1" />
-          <span className="text-sm font-medium">{Math.round(coursePercent)}%</span>
+          <span className="num text-sm font-semibold">{Math.round(coursePercent)}%</span>
         </div>
       </div>
-      {lessonSteps.length > 0 && <StepStrip steps={lessonSteps} currentId={stepId} courseId={courseId} />}
+
+      {lessonSteps.length > 1 && (
+        <Card className="px-3 py-4">
+          <CourseMap steps={lessonSteps} currentId={stepId} courseId={courseId} compact />
+        </Card>
+      )}
 
       {step.loading && !s && <Loader />}
-      {step.error && <ErrorBox error={step.error instanceof ApiError && step.error.status === 400 ? 'Этот шаг пока закрыт — сначала пройдите предыдущие.' : step.error} onRetry={step.reload} />}
+      {step.error && <ErrorBox error={step.error instanceof ApiError && step.error.status === 400 ? 'Этот шаг пока закрыт — сначала пройди предыдущие.' : step.error} onRetry={step.reload} />}
 
       {s && type && (
-        <Card accent={type.color} className="overflow-hidden">
-          <div className="px-5 pt-6 pb-2 sm:px-8">
-            <div className="flex flex-wrap items-center gap-2">
+        <Card>
+          <div className="border-b border-brand-line px-5 pt-6 pb-5 sm:px-8">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
               <StepTypeBadge type={type} />
-              <span className="text-xs text-content-secondary">{checkLabels[type.check]}</span>
+              <span className="eyebrow text-brand-ink-3">{checkLabels[type.check]}</span>
               {st && <StatusBadge status={st} />}
               {s.max_score > 0 && <ScorePill className="ml-auto">до {formatScore(s.max_score)} баллов</ScorePill>}
             </div>
-            <h1 className="mt-3 text-3xl font-medium tracking-tight">{s.title}</h1>
-            {current && <div className="text-sm text-content-secondary">Шаг {current.index} из {flat.length}</div>}
+            <h1 className="mt-4 text-[32px] leading-[1.1] font-extrabold tracking-tight sm:text-[36px]">{s.title}</h1>
+            {current && (
+              <div className="num mt-2 text-xl font-bold text-brand-ink-2">
+                Шаг {current.index} из {flat.length}
+              </div>
+            )}
           </div>
-          <div className="space-y-5 px-5 py-6 sm:px-8">
+          <div className="space-y-6 px-5 py-6 sm:px-8">
             <ResultBanner step={s} type={type} last={last} />
             {actionError && <ErrorBox error={actionError} />}
             <type.Player key={s.id} step={s} content={s.content} busy={busy} canSubmit={canSubmit} submit={submit} complete={complete} />
@@ -206,23 +209,23 @@ export function StepPage() {
       <div className="flex items-center justify-between gap-3">
         {prev ? (
           <Button variant="secondary" onClick={() => navigate(`/courses/${courseId}/steps/${prev.id}`)}>
-            ← Назад
+            <Icon name="arrowLeft" size={18} />
+            Назад
           </Button>
         ) : (
           <span />
         )}
         {next ? (
-          <Button
-            onClick={() => navigate(`/courses/${courseId}/steps/${next.id}`)}
-            disabled={next.progress.status === 'locked'}
-            title={next.progress.status === 'locked' ? 'Сначала пройдите этот шаг' : undefined}
-          >
-            Следующий шаг →
+          <Button onClick={() => navigate(`/courses/${courseId}/steps/${next.id}`)} disabled={nextLocked} title={nextLocked ? 'Откроется, когда этот шаг будет зачтён' : undefined}>
+            {nextLocked && <Icon name="lock" size={18} />}
+            {nextLocked ? 'Шаг закрыт' : 'Следующий шаг'}
+            {!nextLocked && <Icon name="arrowRight" size={18} />}
           </Button>
         ) : (
           current && (
-            <Button onClick={() => navigate(`/courses/${courseId}/progress`)} variant="success">
-              Итоги курса 🏆
+            <Button onClick={() => navigate(`/courses/${courseId}/progress`)}>
+              Итоги курса
+              <Icon name="arrowRight" size={18} />
             </Button>
           )
         )}

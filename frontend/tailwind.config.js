@@ -1,48 +1,33 @@
+// Палитра и шрифты — из брендбука (раздел 08, tailwind.config.js · theme.extend) без изменений.
+// Дополнительно: night-2 и paper из tokens.css.
 export default {
   theme: {
     extend: {
       colors: {
         brand: {
-          DEFAULT: '#3D5AFE',
-          hover: '#2F4BF0',
-          deep: '#1E3A8A',
-          violet: '#7C4DFF',
-          purple: '#A855F7',
-          sky: '#40C4FF',
-          crimson: '#991B1B',
-          gold: '#F59E0B',
+          blue: { DEFAULT: '#3457F0', hover: '#2641C9', 50: '#EAF0FE', 200: '#C9D5FC' },
+          sky: '#7C95FF',
+          night: { DEFAULT: '#0B1220', 2: '#131C30' },
+          amber: { DEFAULT: '#F07A2A', text: '#B8520F', 50: '#FFF1E6' },
+          ink: { DEFAULT: '#0F172A', 2: '#4A546B', 3: '#7C869C' },
+          line: '#E1E6F0',
+          mist: '#F4F6FB',
+          paper: '#FFFFFF',
         },
-        surface: {
-          bg: '#F4F6FF',
-          card: '#FFFFFF',
-          tint: '#EEF1FF',
-          border: '#E2E8F0',
-        },
-        content: {
-          primary: '#161A33',
-          secondary: '#5B6380',
-        },
-        status: {
-          success: '#10B981',
-          pending: '#F59E0B',
-          error: '#EF4444',
-        },
-        step: {
-          scratch: '#F97316',
-          minecraft: '#16A34A',
-          algo: '#3D5AFE',
-          theory: '#8B5CF6',
-        },
-        role: {
-          student: '#3D5AFE',
-          curator: '#0EA5E9',
-          admin: '#7C3AED',
+        st: {
+          done: { DEFAULT: '#17915A', bg: '#E4F5EC' },
+          review: { DEFAULT: '#6E4FE8', bg: '#EFEBFE' },
+          returned: { DEFAULT: '#B8520F', bg: '#FFF1E6' },
+          failed: { DEFAULT: '#D23B3B', bg: '#FCEBEB' },
+          progress: { DEFAULT: '#3457F0', bg: '#EAF0FE' },
+          idle: { DEFAULT: '#5E677D', bg: '#F0F2F6' },
         },
       },
       fontFamily: {
-        sans: ['"Google Sans"', 'Roboto', 'system-ui', '-apple-system', '"Segoe UI"', 'sans-serif'],
-        mono: ['"Roboto Mono"', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
+        sans: ['Onest', 'system-ui', 'sans-serif'],
+        mono: ['JetBrains Mono', 'ui-monospace', 'monospace'],
       },
+      borderRadius: { field: '8px', btn: '12px', card: '16px' },
     },
   },
 }

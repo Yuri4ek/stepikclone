@@ -2,7 +2,7 @@ import { useRef, useState } from 'react'
 import { courseCoverStyle } from '@/entities/course'
 import type { AdminCourseTree } from '@/shared/api'
 import { useAsync } from '@/shared/lib'
-import { Button, Card, Field, Input, Notice, Select, Textarea } from '@/shared/ui'
+import { Button, Card, Field, Input, Notice, Select, StatusPill, Textarea } from '@/shared/ui'
 import { manageCourseApi } from '../api/manageCourseApi'
 
 /** Настройки курса: название и описание, обложка, публикация, назначение куратора */
@@ -32,7 +32,7 @@ export function CourseSettings({ tree, onChanged }: { tree: AdminCourseTree; onC
   return (
     <div className="space-y-4">
       <Card className="space-y-4 p-5">
-        <h2 className="text-lg font-medium">Настройки курса</h2>
+        <h2 className="text-lg font-bold">Настройки курса</h2>
         <Field label="Название">
           <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
         </Field>
@@ -45,9 +45,9 @@ export function CourseSettings({ tree, onChanged }: { tree: AdminCourseTree; onC
       </Card>
 
       <Card className="p-5">
-        <h2 className="font-medium">Обложка</h2>
+        <h2 className="font-bold">Обложка</h2>
         <div className="mt-3 flex flex-wrap items-center gap-4">
-          <div className="h-24 w-44 shrink-0 rounded-[22px]" style={courseCoverStyle(tree)} aria-label="Текущая обложка" />
+          <div className="h-24 w-44 shrink-0 rounded-btn" style={courseCoverStyle(tree)} aria-label="Текущая обложка" />
           <div className="space-y-2">
             <input
               ref={coverInput}
@@ -63,28 +63,31 @@ export function CourseSettings({ tree, onChanged }: { tree: AdminCourseTree; onC
             <Button variant="secondary" loading={busy === 'cover'} onClick={() => coverInput.current?.click()}>
               Загрузить картинку
             </Button>
-            <p className="text-xs text-content-secondary">PNG, JPG, WEBP или GIF до 5 МБ. Без картинки используется градиент.</p>
+            <p className="text-xs text-brand-ink-3">PNG, JPG, WEBP или GIF до 5 МБ. Без картинки используется фирменный цвет.</p>
           </div>
         </div>
       </Card>
 
-      <Card className="p-5" accent={tree.status === 'published' ? '#10B981' : '#64748B'}>
-        <h2 className="font-medium">Публикация</h2>
+      <Card className="p-5">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="font-bold">Публикация</h2>
+          <StatusPill tone={tree.status === 'published' ? 'done' : 'idle'} label={tree.status === 'published' ? 'Опубликован' : 'Черновик'} />
+        </div>
         {tree.status === 'published' ? (
-          <p className="mt-1 text-sm text-content-secondary">Курс опубликован и виден ученикам в каталоге. Изменения шагов применяются сразу.</p>
+          <p className="mt-2 text-sm text-brand-ink-2">Курс виден ученикам в каталоге. Опубликованный курс можно менять: правки шагов применяются сразу, прогресс учеников сохраняется.</p>
         ) : (
           <>
-            <p className="mt-1 text-sm text-content-secondary">Черновик виден только администраторам. В курсе {stepsCount} шагов.</p>
-            <Button className="mt-3" variant="success" disabled={stepsCount === 0} onClick={() => run('publish', () => manageCourseApi.publish(tree.id), 'Курс опубликован')} loading={busy === 'publish'}>
+            <p className="mt-2 text-sm text-brand-ink-2">Черновик виден только администраторам. В курсе <span className="num">{stepsCount}</span> шагов.</p>
+            <Button className="mt-3" disabled={stepsCount === 0} onClick={() => run('publish', () => manageCourseApi.publish(tree.id), 'Курс опубликован')} loading={busy === 'publish'}>
               Опубликовать курс
             </Button>
           </>
         )}
       </Card>
 
-      <Card className="p-5" accent="#0D9488">
-        <h2 className="font-medium">Назначить куратора</h2>
-        <p className="mt-1 text-sm text-content-secondary">Куратор увидит работы и отстающих учеников этого курса.</p>
+      <Card className="p-5">
+        <h2 className="font-bold">Назначить куратора</h2>
+        <p className="mt-1 text-sm text-brand-ink-2">Куратор увидит работы и отстающих учеников этого курса.</p>
         <form
           className="mt-3 flex gap-2"
           onSubmit={(e) => {

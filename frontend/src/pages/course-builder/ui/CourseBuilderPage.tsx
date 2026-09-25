@@ -7,7 +7,7 @@ import { StepEditorPanel, TypePicker } from '@/features/edit-step'
 import { CourseSettings } from '@/features/manage-course'
 import type { AdminLesson, AdminStep } from '@/shared/api'
 import { cx, useAsync } from '@/shared/lib'
-import { Badge, Card, ErrorBox, InlineAdd, Loader, Notice } from '@/shared/ui'
+import { Badge, Card, ErrorBox, Icon, InlineAdd, Loader, Notice } from '@/shared/ui'
 
 type Selection =
   | { kind: 'course' }
@@ -53,14 +53,18 @@ export function CourseBuilderPage() {
   return (
     <>
       <div className="mb-6 flex flex-wrap items-center gap-3">
-        <Link to="/admin" className="text-sm text-content-secondary hover:text-brand-hover">
-          ← Все курсы
+        <Link to="/admin" className="inline-flex items-center gap-1 text-sm text-brand-ink-2 hover:text-brand-blue">
+          <Icon name="arrowLeft" size={16} />
+          Все курсы
         </Link>
-        <h1 className="text-2xl font-medium">{tree.title}</h1>
-        <Badge color={courseStatusMeta[tree.status].color}>{courseStatusMeta[tree.status].label}</Badge>
+        <h1 className="w-full text-[28px] leading-tight font-bold tracking-tight sm:w-auto">{tree.title}</h1>
+        <Badge icon={courseStatusMeta[tree.status].icon} className={courseStatusMeta[tree.status].cls}>
+          {courseStatusMeta[tree.status].label}
+        </Badge>
         {tree.status === 'published' && (
-          <Link to={`/courses/${tree.id}`} className="ml-auto text-sm text-brand-hover hover:underline">
-            Открыть как в каталоге ↗
+          <Link to={`/courses/${tree.id}`} className="ml-auto inline-flex items-center gap-1 text-sm font-semibold text-brand-blue hover:underline">
+            Как видят ученики
+            <Icon name="external" size={16} />
           </Link>
         )}
       </div>
@@ -68,38 +72,44 @@ export function CourseBuilderPage() {
       <div className="grid gap-6 lg:grid-cols-[360px_1fr]">
         {/* Дерево курса */}
         <aside className="space-y-3 lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:self-start lg:overflow-y-auto lg:px-1 lg:pb-6">
-          <button onClick={() => setSel({ kind: 'course' })} className={cx('w-full rounded-full px-5 py-3 text-left text-sm font-medium transition-all', sel.kind === 'course' ? 'bg-gradient-to-r from-role-admin to-fuchsia-600 text-white shadow-lg shadow-role-admin/25' : 'glass text-content-primary hover:text-role-admin')}>
-            ⚙ Настройки и публикация
+          <button
+            onClick={() => setSel({ kind: 'course' })}
+            className={cx('flex w-full items-center gap-2 rounded-btn border px-4 py-3 text-left text-sm font-semibold transition-colors', sel.kind === 'course' ? 'border-brand-blue bg-brand-blue-50 text-brand-blue' : 'border-brand-line bg-white hover:border-brand-blue-200')}
+          >
+            <Icon name="settings" size={18} />
+            Настройки и публикация
           </button>
           {treeError && <ErrorBox error={treeError} />}
 
           {tree.modules.map((m, mi) => (
             <Card key={m.id} className="overflow-hidden">
-              <div className="group flex items-center gap-2 px-5 pt-4 pb-1">
-                <span className="rounded-full bg-role-admin/12 px-2 py-0.5 text-xs font-medium text-role-admin">М{mi + 1}</span>
-                <span className="flex-1 truncate text-sm font-medium">{m.title}</span>
+              <div className="group flex items-center gap-2 px-4 pt-4 pb-1">
+                <span className="eyebrow text-brand-blue">М{mi + 1}</span>
+                <span className="flex-1 truncate text-sm font-bold">{m.title}</span>
                 <button
-                  className="text-xs text-content-secondary lg:opacity-0 lg:group-hover:opacity-100 hover:text-status-error"
+                  className="text-brand-ink-3 hover:text-st-failed lg:opacity-0 lg:group-hover:opacity-100"
                   onClick={() => confirm(`Удалить модуль «${m.title}» со всеми уроками и шагами?`) && void mutate(() => structureApi.deleteModule(m.id))}
                   aria-label="Удалить модуль"
+                  title="Удалить модуль"
                 >
-                  Удалить
+                  <Icon name="trash" size={16} />
                 </button>
               </div>
               <div className="space-y-3 p-3">
                 {m.lessons.map((l, li) => (
                   <div key={l.id}>
                     <div className="group flex items-center gap-2 px-1 pb-1">
-                      <span className="text-xs font-medium text-content-secondary">
+                      <span className="num text-xs font-semibold text-brand-ink-3">
                         {mi + 1}.{li + 1}
                       </span>
-                      <span className="flex-1 truncate text-sm font-medium">{l.title}</span>
+                      <span className="flex-1 truncate text-sm font-semibold">{l.title}</span>
                       <button
-                        className="text-xs text-content-secondary lg:opacity-0 lg:group-hover:opacity-100 hover:text-status-error"
+                        className="text-brand-ink-3 hover:text-st-failed lg:opacity-0 lg:group-hover:opacity-100"
                         onClick={() => confirm(`Удалить урок «${l.title}»?`) && void mutate(() => structureApi.deleteLesson(l.id))}
                         aria-label="Удалить урок"
+                        title="Удалить урок"
                       >
-                        Удалить
+                        <Icon name="trash" size={16} />
                       </button>
                     </div>
                     <div className="space-y-1">
@@ -107,17 +117,17 @@ export function CourseBuilderPage() {
                         const t = stepType(s)
                         const active = sel.kind === 'step' && sel.stepId === s.id
                         return (
-                          <div key={s.id} className={cx('group flex items-center gap-2 rounded-2xl py-1.5 pr-1 pl-1.5 transition-colors', active ? 'bg-brand/12' : 'hover:bg-brand/5')}>
+                          <div key={s.id} className={cx('group flex items-center gap-2 rounded-btn py-1.5 pr-1 pl-1.5 transition-colors', active ? 'bg-brand-blue-50' : 'hover:bg-brand-mist')}>
                             <button className="flex min-w-0 flex-1 items-center gap-2 text-left" onClick={() => setSel({ kind: 'step', stepId: s.id })}>
                               <StepTypeIcon type={t} size="sm" />
                               <span className="truncate text-sm">{s.title}</span>
                             </button>
                             <span className="flex lg:opacity-0 lg:group-hover:opacity-100">
-                              <button className="px-1 text-xs text-content-secondary hover:text-brand disabled:opacity-30" disabled={si === 0} onClick={() => move(l, si, -1)} aria-label="Выше">
-                                ▲
+                              <button className="p-1 text-brand-ink-3 hover:text-brand-blue disabled:opacity-30" disabled={si === 0} onClick={() => move(l, si, -1)} aria-label="Выше">
+                                <Icon name="arrowUp" size={14} />
                               </button>
-                              <button className="px-1 text-xs text-content-secondary hover:text-brand disabled:opacity-30" disabled={si === l.steps.length - 1} onClick={() => move(l, si, 1)} aria-label="Ниже">
-                                ▼
+                              <button className="p-1 text-brand-ink-3 hover:text-brand-blue disabled:opacity-30" disabled={si === l.steps.length - 1} onClick={() => move(l, si, 1)} aria-label="Ниже">
+                                <Icon name="arrowDown" size={14} />
                               </button>
                             </span>
                           </div>
@@ -125,9 +135,10 @@ export function CourseBuilderPage() {
                       })}
                       <button
                         onClick={() => setSel({ kind: 'pick', lessonId: l.id })}
-                        className={cx('w-full rounded-2xl px-3 py-2 text-left text-xs font-medium hover:bg-brand/8', (sel.kind === 'pick' || sel.kind === 'new') && sel.lessonId === l.id ? 'bg-brand/10 text-brand' : 'text-brand')}
+                        className={cx('flex w-full items-center gap-1 rounded-btn px-3 py-2 text-left text-xs font-semibold text-brand-blue hover:bg-brand-blue-50', (sel.kind === 'pick' || sel.kind === 'new') && sel.lessonId === l.id && 'bg-brand-blue-50')}
                       >
-                        + Шаг
+                        <Icon name="plus" size={14} />
+                        Шаг
                       </button>
                     </div>
                   </div>

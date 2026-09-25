@@ -1,39 +1,34 @@
-import { useState, type ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import type { Answers, StepContent } from '@/shared/api'
-import { cx } from '@/shared/lib'
-import { Button, Field, Input, Markdown, Textarea } from '@/shared/ui'
+import { Button, Field, Input, Markdown, Segmented, Textarea } from '@/shared/ui'
+import { useState } from 'react'
 import { isUrl, str } from '../lib/content'
 import { useDraft } from '../model/useDraft'
 
 // ---------- Редактор ----------
 
 export function MarkdownField({ label, value, onChange, rows = 8, hint }: { label: string; value: string; onChange: (v: string) => void; rows?: number; hint?: ReactNode }) {
-  const [preview, setPreview] = useState(false)
+  const [preview, setPreview] = useState<'text' | 'preview'>('text')
   return (
     <div>
-      <div className="mb-1 flex items-center justify-between">
-        <span className="text-sm font-medium">{label}</span>
-        <div className="flex rounded-full bg-brand/8 p-0.5 text-xs">
-          {(['Текст', 'Просмотр'] as const).map((t, i) => (
-            <button
-              key={t}
-              type="button"
-              onClick={() => setPreview(i === 1)}
-              className={cx('rounded-full px-2.5 py-1 font-medium', preview === (i === 1) ? 'bg-white text-brand shadow-sm' : 'text-content-secondary')}
-            >
-              {t}
-            </button>
-          ))}
-        </div>
+      <div className="mb-1.5 flex items-center justify-between gap-2">
+        <span className="text-sm font-semibold">{label}</span>
+        <Segmented
+          value={preview}
+          onChange={setPreview}
+          className="text-xs"
+          options={[
+            { value: 'text', label: 'Текст' },
+            { value: 'preview', label: 'Просмотр' },
+          ]}
+        />
       </div>
-      {preview ? (
-        <div className="min-h-24 rounded-2xl bg-white/80 p-4">
-          {value.trim() ? <Markdown>{value}</Markdown> : <span className="text-sm text-slate-400">Пусто</span>}
-        </div>
+      {preview === 'preview' ? (
+        <div className="min-h-24 rounded-field border border-brand-line bg-white p-4">{value.trim() ? <Markdown>{value}</Markdown> : <span className="text-sm text-brand-ink-3">Пусто</span>}</div>
       ) : (
-        <Textarea rows={rows} value={value} onChange={(e) => onChange(e.target.value)} className="font-mono" placeholder="Поддерживается Markdown: **жирный**, списки, `код`, таблицы" />
+        <Textarea rows={rows} value={value} onChange={(e) => onChange(e.target.value)} className="font-mono text-sm" placeholder="Поддерживается Markdown: **жирный**, списки, `код`, таблицы" />
       )}
-      {hint && <span className="mt-1 block text-xs text-content-secondary">{hint}</span>}
+      {hint && <span className="mt-1.5 block text-xs text-brand-ink-2">{hint}</span>}
     </div>
   )
 }
@@ -41,7 +36,7 @@ export function MarkdownField({ label, value, onChange, rows = 8, hint }: { labe
 export function CriteriaField({ content, onChange }: { content: StepContent; onChange: (c: StepContent) => void }) {
   return (
     <Field label="Критерии проверки для куратора" hint="Ученик их тоже видит — так оценка становится понятной">
-      <Textarea rows={3} value={str(content, 'criteria')} onChange={(e) => onChange({ ...content, criteria: e.target.value })} placeholder="Например: программа работает; есть обоснование; аккуратное оформление" />
+      <Textarea rows={3} value={str(content, 'criteria')} onChange={(e) => onChange({ ...content, criteria: e.target.value })} placeholder="Например: программа работает; есть объяснение; аккуратное оформление" />
     </Field>
   )
 }
@@ -52,8 +47,8 @@ export function Criteria({ content }: { content: StepContent }) {
   const c = str(content, 'criteria')
   if (!c.trim()) return null
   return (
-    <div className="rounded-3xl bg-brand-violet/8 p-5">
-      <div className="mb-1 text-sm font-medium text-brand-violet">Как будет оцениваться</div>
+    <div className="rounded-card border border-brand-blue-200 bg-brand-blue-50 p-5">
+      <div className="eyebrow mb-1 text-brand-blue">Как будут оценивать</div>
       <Markdown className="prose-sm">{c}</Markdown>
     </div>
   )
@@ -84,7 +79,7 @@ export function ManualSubmitForm({
   linkPlaceholder,
   linkRequired,
   textLabel = 'Ответ',
-  textPlaceholder = 'Опишите, что сделали и почему',
+  textPlaceholder = 'Расскажи, что сделал и почему',
   extra,
   extraValid = true,
   children,
@@ -108,18 +103,18 @@ export function ManualSubmitForm({
     >
       {children}
       {linkLabel && (
-        <Field label={linkLabel + (linkRequired ? ' *' : '')} hint={!linkOk ? <span className="text-status-error">Ссылка должна начинаться с http:// или https://</span> : undefined}>
+        <Field label={linkLabel + (linkRequired ? ' *' : '')} hint={!linkOk ? <span className="text-brand-amber-text">Ссылка должна начинаться с http:// или https://</span> : undefined}>
           <Input type="url" value={draft.link} onChange={(e) => setDraft({ ...draft, link: e.target.value })} placeholder={linkPlaceholder} disabled={!canSubmit} />
         </Field>
       )}
       <Field label={textLabel}>
         <Textarea rows={5} value={draft.text} onChange={(e) => setDraft({ ...draft, text: e.target.value })} placeholder={textPlaceholder} disabled={!canSubmit} />
       </Field>
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <Button type="submit" loading={busy} disabled={!canSubmit || !valid}>
-          Отправить куратору
+          Отправить на проверку
         </Button>
-        <span className="text-xs text-content-secondary">Работу проверит куратор — результат появится здесь</span>
+        <span className="text-sm text-brand-ink-2">Работу посмотрит куратор, результат появится здесь</span>
       </div>
     </form>
   )
@@ -132,19 +127,19 @@ export function DefaultReviewView({ payload }: { payload: Answers }) {
     <div className="space-y-3">
       {link && (
         <div>
-          <div className="text-xs font-medium text-content-secondary">Ссылка на результат</div>
-          <a href={link} target="_blank" rel="noreferrer noopener" className="break-all text-brand-hover underline">
+          <div className="eyebrow text-brand-ink-3">Ссылка на результат</div>
+          <a href={link} target="_blank" rel="noreferrer noopener" className="break-all text-brand-blue underline">
             {link}
           </a>
         </div>
       )}
       {text && text !== link && (
         <div>
-          <div className="text-xs font-medium text-content-secondary">Ответ</div>
-          <div className="mt-1 rounded-2xl bg-brand/6 p-4 text-sm whitespace-pre-wrap">{text}</div>
+          <div className="eyebrow text-brand-ink-3">Ответ</div>
+          <div className="mt-1 rounded-field bg-brand-mist p-4 text-sm whitespace-pre-wrap">{text}</div>
         </div>
       )}
-      {!text && !link && <div className="text-sm text-content-secondary">Пустой ответ</div>}
+      {!text && !link && <div className="text-sm text-brand-ink-2">Пустой ответ</div>}
     </div>
   )
 }

@@ -12,7 +12,7 @@ export function CreateCourseForm({ onCancel }: { onCancel: () => void }) {
   const [error, setError] = useState<Error>()
 
   return (
-    <Card className="mb-6 p-6" accent="#7C3AED">
+    <Card className="mb-6 p-6">
       <form
         className="space-y-4"
         onSubmit={async (e) => {
@@ -28,7 +28,7 @@ export function CreateCourseForm({ onCancel }: { onCancel: () => void }) {
           }
         }}
       >
-        <h2 className="font-medium">Новый курс</h2>
+        <h2 className="text-lg font-bold">Новый курс</h2>
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Название">
             <Input

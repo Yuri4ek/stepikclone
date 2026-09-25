@@ -1,36 +1,37 @@
 import { useState } from 'react'
 import { STEP_TYPES, StepTypeIcon, checkLabels } from '@/entities/step'
 import { cx } from '@/shared/lib'
-import { ButtonLink, Card, PageHeader } from '@/shared/ui'
+import { ButtonLink, Card, Icon, PageHeader, SectionLabel, StatusPill, type StatusTone } from '@/shared/ui'
 
-const statuses = [
-  { label: 'Доступен', color: '#3D5AFE', text: 'Шаг открыт — можно проходить.' },
-  { label: 'На проверке', color: '#D97706', text: 'Работа у куратора. Следующий шаг откроется после того, как её примут.' },
-  { label: 'Возвращено', color: '#EF4444', text: 'Куратор оставил комментарий — исправьте и отправьте снова.' },
-  { label: 'Пройден', color: '#059669', text: 'Шаг засчитан, баллы добавлены в рейтинг.' },
-  { label: 'Закрыт', color: '#94A3B8', text: 'Откроется, когда будут пройдены предыдущие шаги.' },
+const statuses: { tone: StatusTone; text: string }[] = [
+  { tone: 'progress', text: 'Шаг открыт, ответ ещё не отправлен.' },
+  { tone: 'review', text: 'Работа в очереди у куратора. Результат появится на шаге.' },
+  { tone: 'returned', text: 'Куратор оставил комментарий — поправь работу и отправь снова.' },
+  { tone: 'failed', text: 'Автопроверка нашла ошибку. Можно отправить снова, результат будет сразу.' },
+  { tone: 'done', text: 'Автопроверка пройдена или куратор принял работу. Баллы уже в прогрессе.' },
+  { tone: 'idle', text: 'Шаг откроется, когда будут зачтены предыдущие.' },
 ]
 
 const faq = [
   {
-    q: 'Как считается рейтинг?',
-    a: 'Рейтинг = сумма полученных баллов ÷ сумма максимальных баллов за пройденные задания × 100. На странице «Мой рейтинг» видно, сколько баллов дал каждый шаг и где их потеряно.',
+    q: 'Как считаются баллы?',
+    a: 'За каждое задание с проверкой можно получить баллы — сколько именно, написано на шаге. Рейтинг в курсе = полученные баллы ÷ все баллы обязательных заданий курса × 100. На странице «Прогресс и баллы» видно, сколько дала автопроверка, сколько — куратор, и сколько ещё можно получить.',
   },
   {
     q: 'Оценка куратора влияет так же, как автопроверка?',
-    a: 'Да. Баллы, которые ставит куратор, считаются в рейтинге и прогрессе точно так же, как баллы автопроверки.',
+    a: 'Да. «Зачтено» от куратора и «Зачтено» от автопроверки выглядят одинаково и одинаково двигают прогресс. Кто проверил, написано мелко под статусом.',
   },
   {
-    q: 'Что будет, если ответить на тест неверно?',
+    q: 'Что будет, если ответ не совпал?',
     a: 'Результат покажется сразу, а шаг снова станет доступен — можно попробовать ещё раз.',
   },
   {
-    q: 'Как проверяются задачи на программирование?',
+    q: 'Как проверяются задачи с тестами?',
     a: 'Кнопка «Запустить тесты» прогоняет решение по набору тестов прямо в браузере и сразу показывает, какие тесты не прошли. После отправки куратор подтверждает результат и ставит баллы.',
   },
   {
     q: 'Как куратор узнаёт, что ученик отстаёт?',
-    a: 'Платформа отмечает учеников, которые не заходили 3 и более дней или медленно продвигаются («Внимание»), и тех, кто не заходил неделю («Критично»). Куратор видит список и может написать им заранее.',
+    a: 'Платформа отмечает тех, кто не заходил 3 и более дней или медленно продвигается («Замедлился»), и тех, кто не заходил неделю («Выпадает»). Куратор видит список и может написать заранее. Ученик эти пометки не видит.',
   },
 ]
 
@@ -38,21 +39,18 @@ export function HelpPage() {
   const [open, setOpen] = useState(0)
   return (
     <div className="space-y-12">
-      <PageHeader title="Как это работает" subtitle="Шаги курса, проверка заданий, прогресс и рейтинг" />
+      <PageHeader title="Как это работает" subtitle="Шаги курса, проверка заданий, прогресс и баллы" />
 
       <section>
-        <h2 className="mb-2 text-2xl font-medium tracking-tight">Типы шагов</h2>
-        <p className="mb-6 text-content-secondary">Каждый шаг отмечен своим цветом и значком — так сразу понятно, что нужно сделать.</p>
+        <SectionLabel>Типы шагов</SectionLabel>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {STEP_TYPES.map((t) => (
-            <Card key={t.id} className="flex gap-4 p-6" accent={t.color}>
+            <Card key={t.id} className="flex gap-4 p-5">
               <StepTypeIcon type={t} />
               <div>
-                <div className="font-medium">{t.label}</div>
-                <div className="mt-1 text-sm text-content-secondary">{t.description}</div>
-                <div className="mt-2 text-xs font-medium" style={{ color: t.color }}>
-                  {checkLabels[t.check]}
-                </div>
+                <div className="font-bold">{t.label}</div>
+                <div className="mt-1 text-sm text-brand-ink-2">{t.description}</div>
+                <div className="eyebrow mt-2 text-brand-ink-3">{checkLabels[t.check]}</div>
               </div>
             </Card>
           ))}
@@ -60,52 +58,55 @@ export function HelpPage() {
       </section>
 
       <section className="grid gap-4 lg:grid-cols-2">
-        <Card className="p-7" accent="#3D5AFE">
-          <div className="text-3xl">⚡</div>
-          <h3 className="mt-3 text-xl font-medium">Автоматическая проверка</h3>
-          <p className="mt-2 text-sm text-content-secondary">Тесты, задачи с ответом и задачи с прогоном по тестам. Результат приходит сразу после отправки.</p>
+        <Card className="p-6">
+          <span className="flex size-12 items-center justify-center rounded-btn bg-brand-blue-50 text-brand-blue">
+            <Icon name="check" size={24} />
+          </span>
+          <h3 className="mt-4 text-xl font-bold">Автоматическая проверка</h3>
+          <p className="mt-2 text-brand-ink-2">Вопросы и задачи с ответом. Результат приходит сразу после отправки.</p>
         </Card>
-        <Card className="p-7" accent="#7C4DFF">
-          <div className="text-3xl">🧑‍🏫</div>
-          <h3 className="mt-3 text-xl font-medium">Ручная проверка</h3>
-          <p className="mt-2 text-sm text-content-secondary">
-            Проекты Scratch, задания в Minecraft, файлы и ссылки уходят куратору. Он принимает работу с оценкой или возвращает с комментарием — статус и причина видны на шаге и в «Моих работах».
-          </p>
+        <Card className="p-6">
+          <span className="flex size-12 items-center justify-center rounded-btn bg-brand-blue-50 text-brand-blue">
+            <Icon name="user" size={24} />
+          </span>
+          <h3 className="mt-4 text-xl font-bold">Ручная проверка</h3>
+          <p className="mt-2 text-brand-ink-2">Проекты Scratch, задания в Minecraft, файлы и ссылки уходят куратору. Он принимает работу или возвращает с комментарием — статус и причина видны на шаге и в «Моих работах».</p>
         </Card>
       </section>
 
       <section>
-        <h2 className="mb-6 text-2xl font-medium tracking-tight">Статусы шага</h2>
-        <div className="flex flex-wrap gap-3">
-          {statuses.map((s) => (
-            <div key={s.label} className="glass flex max-w-xs items-start gap-3 rounded-3xl px-5 py-4">
-              <span className="mt-1 size-3 shrink-0 rounded-full" style={{ backgroundColor: s.color }} />
-              <span>
-                <span className="block font-medium">{s.label}</span>
-                <span className="block text-sm text-content-secondary">{s.text}</span>
-              </span>
+        <SectionLabel>Статусы шага</SectionLabel>
+        <Card>
+          <ul>
+            {statuses.map((s) => (
+              <li key={s.tone} className="flex flex-col gap-2 border-b border-brand-line px-5 py-4 last:border-0 sm:flex-row sm:items-center sm:gap-6">
+                <span className="sm:w-48">
+                  <StatusPill tone={s.tone} />
+                </span>
+                <span className="text-brand-ink-2">{s.text}</span>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      </section>
+
+      <section>
+        <SectionLabel>Частые вопросы</SectionLabel>
+        <Card>
+          {faq.map((f, i) => (
+            <div key={f.q} className="border-b border-brand-line last:border-0">
+              <button className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left font-semibold" onClick={() => setOpen(open === i ? -1 : i)} aria-expanded={open === i}>
+                {f.q}
+                <Icon name="chevronDown" size={20} className={cx('shrink-0 text-brand-ink-3 transition-transform', open === i && 'rotate-180')} />
+              </button>
+              {open === i && <p className="px-5 pb-5 text-brand-ink-2">{f.a}</p>}
             </div>
           ))}
-        </div>
+        </Card>
       </section>
 
-      <section>
-        <h2 className="mb-6 text-2xl font-medium tracking-tight">Частые вопросы</h2>
-        <div className="space-y-2">
-          {faq.map((f, i) => (
-            <Card key={f.q} className="overflow-hidden">
-              <button className="flex w-full items-center justify-between gap-4 px-6 py-5 text-left font-medium" onClick={() => setOpen(open === i ? -1 : i)} aria-expanded={open === i}>
-                {f.q}
-                <span className={cx('flex size-8 shrink-0 items-center justify-center rounded-full bg-brand/10 text-brand transition-transform', open === i && 'rotate-45')}>+</span>
-              </button>
-              {open === i && <p className="px-6 pb-5 text-content-secondary">{f.a}</p>}
-            </Card>
-          ))}
-        </div>
-      </section>
-
-      <div className="text-center">
-        <ButtonLink to="/">К обучению</ButtonLink>
+      <div>
+        <ButtonLink to="/">На главную</ButtonLink>
       </div>
     </div>
   )

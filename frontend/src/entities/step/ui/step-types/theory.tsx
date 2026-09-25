@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import { mediaUrl, upload } from '@/shared/api'
-import { Button, ErrorBox, Field, Input, Markdown } from '@/shared/ui'
+import { Button, ErrorBox, Field, Icon, Input, Markdown } from '@/shared/ui'
 import { list, str } from '../../lib/content'
 import { MarkdownField } from '../common'
 import type { StepTypeDef } from '../../model/types'
@@ -49,9 +49,10 @@ function ImageUpload({ onUploaded }: { onUploaded: (url: string, name: string) =
         }}
       />
       <Button type="button" size="sm" variant="secondary" loading={busy} onClick={() => input.current?.click()}>
-        🖼 Вставить картинку
+        <Icon name="image" size={16} />
+        Вставить картинку
       </Button>
-      <span className="ml-2 text-xs text-content-secondary">PNG, JPG, WEBP или GIF до 5 МБ</span>
+      <span className="ml-2 text-xs text-brand-ink-2">PNG, JPG, WEBP или GIF до 5 МБ</span>
       {error && <ErrorBox error={error} />}
     </div>
   )
@@ -61,9 +62,8 @@ export const theoryStep: StepTypeDef = {
   id: 'theory',
   kind: 'theory',
   label: 'Теория',
-  description: 'Текст с картинками, примерами кода и видео. Засчитывается после прочтения.',
-  icon: '📖',
-  color: '#8B5CF6',
+  description: 'Текст, картинки, видео по ссылке. Засчитывается при прочтении.',
+  icon: 'book',
   check: 'none',
   defaultMaxScore: 0,
   defaultContent: () => ({ type: 'theory', markdown: '', video_url: '' }),
@@ -84,7 +84,7 @@ export const theoryStep: StepTypeDef = {
     return (
       <div className="space-y-6">
         {embed && (
-          <div className="aspect-video overflow-hidden rounded-3xl bg-black shadow-lg">
+          <div className="aspect-video overflow-hidden rounded-card bg-brand-night">
             <iframe src={embed} title={step.title} className="size-full" allow="encrypted-media; fullscreen" allowFullScreen />
           </div>
         )}
@@ -92,17 +92,21 @@ export const theoryStep: StepTypeDef = {
         {list<StepImage>(content, 'images')
           .filter((img) => img?.url)
           .map((img, i) => (
-            <figure key={i} className="overflow-hidden rounded-3xl bg-white/60 shadow-sm">
+            <figure key={i} className="overflow-hidden rounded-card border border-brand-line bg-white">
               <img src={mediaUrl(img.url) ?? img.url} alt={img.alt ?? ''} className="max-h-[420px] w-full object-cover" loading="lazy" />
-              {img.alt && <figcaption className="px-5 py-3 text-sm text-content-secondary">{img.alt}</figcaption>}
+              {img.alt && <figcaption className="px-5 py-3 text-sm text-brand-ink-2">{img.alt}</figcaption>}
             </figure>
           ))}
         <div className="pt-2">
           {passed ? (
-            <span className="inline-flex items-center gap-2 rounded-full bg-emerald-500/12 px-4 py-2 font-medium text-emerald-700">✓ Материал изучен</span>
+            <span className="inline-flex items-center gap-2 rounded-full bg-st-done-bg px-4 py-2 font-semibold text-st-done">
+              <Icon name="check" size={18} strokeWidth={2.2} />
+              Прочитано
+            </span>
           ) : (
             <Button onClick={complete} loading={busy}>
-              Я изучил(а) материал
+              Готово, идём дальше
+              <Icon name="arrowRight" size={18} />
             </Button>
           )}
         </div>

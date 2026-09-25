@@ -1,14 +1,15 @@
 import { Link, useParams } from 'react-router-dom'
 import { courseApi, flattenOutline, sortOutline } from '@/entities/course'
 import { StepTypeIcon, resolveStepType } from '@/entities/step'
+import { RatingBreakdown } from '@/widgets/rating-breakdown'
 import { ApiError, type BreakdownItem } from '@/shared/api'
 import { formatDate, formatPercent, formatScore, useAsync } from '@/shared/lib'
-import { Badge, ButtonLink, Card, EmptyState, ErrorBox, Loader, PageHeader, ProgressBar, ScorePill } from '@/shared/ui'
+import { ButtonLink, Card, EmptyState, ErrorBox, Icon, Loader, PageHeader, ProgressBar, SectionLabel, StatusPill } from '@/shared/ui'
 
-const sourceMeta: Record<BreakdownItem['source'], { label: string; color: string }> = {
-  auto: { label: 'Автопроверка', color: '#2563EB' },
-  manual: { label: 'Оценка куратора', color: '#0D9488' },
-  theory: { label: 'Теория', color: '#8B5CF6' },
+const sourceLabel: Record<BreakdownItem['source'], string> = {
+  auto: 'Задания с автопроверкой',
+  manual: 'Работы, принятые куратором',
+  theory: 'Теория',
 }
 
 async function load(courseId: string) {
@@ -23,9 +24,8 @@ export function ProgressPage() {
   if (loading && !data) return <Loader />
   if (error instanceof ApiError && error.status === 404) {
     return (
-      <EmptyState icon="📚" title="Вы не записаны на этот курс">
-        Прогресс и рейтинг появляются после записи на курс.{' '}
-        <Link to={`/courses/${courseId}`} className="text-brand">
+      <EmptyState icon="chart" title="Прогресс появится после начала курса">
+        <Link to={`/courses/${courseId}`} className="font-semibold text-brand-blue">
           Открыть программу курса
         </Link>
       </EmptyState>
@@ -37,150 +37,134 @@ export function ProgressPage() {
   const { progress: p, outline } = data
   const r = p.rating
   const flat = flattenOutline(outline)
-  const earned = new Set(r.breakdown.map((b) => b.step_id))
-  const toEarn = flat.filter((s) => s.max_score > 0 && !earned.has(s.id))
   const lostPoints = r.breakdown.filter((b) => b.score < b.max_score)
-  const bySource = (['auto', 'manual', 'theory'] as const)
-    .map((src) => ({ src, items: r.breakdown.filter((b) => b.source === src) }))
-    .filter((g) => g.items.length)
+  const bySource = (['auto', 'manual', 'theory'] as const).map((src) => ({ src, items: r.breakdown.filter((b) => b.source === src) })).filter((g) => g.items.length)
   const currentStep = flat.find((s) => s.id === p.current_step_id)
 
   return (
     <>
       <PageHeader
         eyebrow={
-          <Link to={`/courses/${courseId}`} className="hover:text-brand-hover">
-            ← {outline.course.title}
+          <Link to={`/courses/${courseId}`} className="inline-flex items-center gap-1 hover:text-brand-blue">
+            <Icon name="arrowLeft" size={16} />
+            {outline.course.title}
           </Link>
         }
-        title="Мой прогресс и рейтинг"
+        title="Прогресс и баллы"
         subtitle={`Обновлено ${formatDate(p.updated_at)}`}
       />
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card className="p-6" accent="#3D5AFE">
-          <div className="text-sm text-content-secondary">Курс пройден</div>
-          <div className="mt-1 text-4xl font-medium">{formatPercent(p.percent)}</div>
-          <ProgressBar value={p.percent} className="mt-3" />
-          <div className="mt-2 text-sm text-content-secondary">
-            Обязательных шагов: {p.completed_required_steps} из {p.total_required_steps}
-          </div>
-        </Card>
-        <Card className="p-6" accent="#F59E0B">
-          <div className="text-sm text-amber-800">Рейтинг</div>
-          <div className="mt-1 flex items-baseline gap-2">
-            <span className="text-4xl font-medium text-amber-500">★ {formatScore(r.score)}</span>
-            <span className="text-content-secondary">из 100</span>
-          </div>
-          <div className="mt-3 text-sm text-content-secondary">
-            Набрано <b className="text-amber-700">{formatScore(r.total_score)}</b> из <b>{formatScore(r.total_max)}</b> возможных баллов в пройденных заданиях
-          </div>
-        </Card>
-        <Card className="p-6" accent="#7C4DFF">
-          <div className="text-sm text-content-secondary">Что делать дальше</div>
-          {currentStep ? (
-            <>
-              <div className="mt-1 font-medium">{currentStep.title}</div>
-              <div className="text-sm text-content-secondary">
-                {currentStep.module.title} · {currentStep.lesson.title}
-              </div>
-              <ButtonLink to={`/courses/${courseId}/steps/${currentStep.id}`} className="mt-3 w-full">
-                Продолжить →
-              </ButtonLink>
-            </>
-          ) : (
-            <div className="mt-1 text-lg font-medium text-status-success">🏆 Все шаги пройдены</div>
-          )}
-        </Card>
-      </div>
-
-      {/* Объяснение формулы */}
-      <Card className="mt-6 p-6">
-        <h2 className="text-lg font-medium">Как считается рейтинг</h2>
-        <div className="mt-3 flex flex-wrap items-center gap-3 text-sm">
-          <span className="rounded-full bg-amber-400/15 px-4 py-2 font-mono text-amber-800">
-            {formatScore(r.total_score)} ÷ {formatScore(r.total_max)} × 100 = <b>{formatScore(r.score)}</b>
-          </span>
-          <span className="text-content-secondary">
-            Сумма полученных баллов делится на сумму максимальных баллов за пройденные задания. Баллы за автопроверку и за оценку куратора
-            считаются одинаково. Теория баллов не даёт, но двигает прогресс.
-          </span>
-        </div>
-      </Card>
-
-      <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_320px]">
-        <Card>
-          <div className="px-6 pt-6 pb-2">
-            <h2 className="text-lg font-medium">Из чего сложился результат</h2>
-          </div>
-          {r.breakdown.length === 0 ? (
-            <div className="p-5">
-              <EmptyState icon="🌱" title="Баллов пока нет">
-                Пройдите первое задание — и здесь появится разбор.
-              </EmptyState>
-            </div>
-          ) : (
-            bySource.map(({ src, items }) => (
-              <div key={src} className="p-2">
-                <div className="flex items-center justify-between rounded-2xl px-4 py-2 text-sm font-medium" style={{ color: sourceMeta[src].color, backgroundColor: `${sourceMeta[src].color}14` }}>
-                  <span>{sourceMeta[src].label}</span>
-                  <span>
-                    {formatScore(items.reduce((a, b) => a + b.score, 0))} / {formatScore(items.reduce((a, b) => a + b.max_score, 0))}
-                  </span>
-                </div>
-                <ul className="mt-1 space-y-0.5">
-                  {items.map((b) => {
-                    const type = resolveStepType(b.kind, null, b.step_id)
-                    return (
-                      <li key={b.step_id} className="flex items-center gap-3 rounded-2xl px-3 py-2.5 hover:bg-brand/5">
-                        <StepTypeIcon type={type} size="sm" />
-                        <Link to={`/courses/${courseId}/steps/${b.step_id}`} className="min-w-0 flex-1 truncate text-sm font-medium hover:text-brand-hover">
-                          {b.title}
-                        </Link>
-                        <ProgressBar value={b.max_score ? (b.score / b.max_score) * 100 : 0} color="bg-gradient-to-r from-amber-300 to-amber-500" className="hidden w-24 sm:block" />
-                        <ScorePill>
-                          {formatScore(b.score)}/{formatScore(b.max_score)}
-                        </ScorePill>
-                      </li>
-                    )
-                  })}
-                </ul>
-              </div>
-            ))
-          )}
-        </Card>
+      <div className="grid items-start gap-6 lg:grid-cols-[1.2fr_1fr]">
+        <RatingBreakdown progress={p} steps={flat} />
 
         <div className="space-y-4">
-          {lostPoints.length > 0 && (
-            <Card className="p-6" accent="#F59E0B">
-              <div className="font-medium">Где потеряны баллы</div>
-              <ul className="mt-2 space-y-1 text-sm">
+          <Card className="p-6">
+            <div className="flex items-baseline justify-between">
+              <span className="font-bold">Курс пройден</span>
+              <span className="num text-2xl font-extrabold">{formatPercent(p.percent)}</span>
+            </div>
+            <ProgressBar value={p.percent} className="mt-3" />
+            <p className="mt-2 text-sm text-brand-ink-2">
+              Зачтено <span className="num font-semibold text-brand-ink">{p.completed_required_steps}</span> из <span className="num font-semibold text-brand-ink">{p.total_required_steps}</span> обязательных шагов. Теория тоже считается.
+            </p>
+          </Card>
+
+          <Card className="p-6">
+            <div className="flex items-baseline justify-between">
+              <span className="font-bold">Рейтинг в курсе</span>
+              <span className="num text-2xl font-extrabold">
+                {formatScore(r.score)}
+                <span className="text-base font-semibold text-brand-ink-3"> из 100</span>
+              </span>
+            </div>
+            <p className="mt-2 text-sm text-brand-ink-2">
+              Сколько процентов всех баллов курса уже получено:{' '}
+              <span className="num rounded-md bg-brand-mist px-1.5 py-0.5 font-mono whitespace-nowrap text-brand-ink">
+                {formatScore(r.total_score)} ÷ {formatScore(r.total_max)} × 100
+              </span>
+              . Баллы от куратора и от автопроверки считаются одинаково.
+            </p>
+          </Card>
+
+          <Card className="p-6">
+            <div className="eyebrow text-brand-ink-3">Что делать дальше</div>
+            {currentStep ? (
+              <>
+                <div className="mt-1 text-lg font-bold">{currentStep.title}</div>
+                <div className="text-sm text-brand-ink-2">
+                  {currentStep.module.title} · {currentStep.lesson.title}
+                </div>
+                <ButtonLink to={`/courses/${courseId}/steps/${currentStep.id}`} className="mt-4 w-full">
+                  Продолжить
+                  <Icon name="arrowRight" size={18} />
+                </ButtonLink>
+              </>
+            ) : (
+              <div className="mt-2">
+                <StatusPill tone="done" label="Все шаги пройдены" />
+              </div>
+            )}
+          </Card>
+        </div>
+      </div>
+
+      <div className="mt-8 grid items-start gap-6 lg:grid-cols-[1.2fr_1fr]">
+        <section>
+          <SectionLabel>Из чего сложились баллы</SectionLabel>
+          {r.breakdown.length === 0 ? (
+            <EmptyState icon="sparkle" title="Баллов пока нет">
+              Выполни первое задание — и здесь появится разбор.
+            </EmptyState>
+          ) : (
+            <Card>
+              {bySource.map(({ src, items }) => (
+                <div key={src} className="border-b border-brand-line p-2 last:border-0">
+                  <div className="flex items-center justify-between px-3 py-2 text-sm font-bold">
+                    <span>{sourceLabel[src]}</span>
+                    <span className="num">
+                      {formatScore(items.reduce((a, b) => a + b.score, 0))} из {formatScore(items.reduce((a, b) => a + b.max_score, 0))}
+                    </span>
+                  </div>
+                  <ul>
+                    {items.map((b) => (
+                      <li key={b.step_id}>
+                        <Link to={`/courses/${courseId}/steps/${b.step_id}`} className="flex items-center gap-3 rounded-btn px-3 py-2 hover:bg-brand-mist">
+                          <StepTypeIcon type={resolveStepType(b.kind, null, b.step_id)} size="sm" />
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate font-semibold">{b.title}</span>
+                            <span className="text-xs text-brand-ink-3">{b.source === 'manual' ? 'проверил куратор' : 'проверено автоматически'}</span>
+                          </span>
+                          <span className="num font-bold">
+                            {formatScore(b.score)}
+                            <span className="font-normal text-brand-ink-3">/{formatScore(b.max_score)}</span>
+                          </span>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </Card>
+          )}
+        </section>
+
+        {lostPoints.length > 0 && (
+          <section>
+            <SectionLabel>Где баллов могло быть больше</SectionLabel>
+            <Card className="p-2">
+              <ul>
                 {lostPoints.map((b) => (
-                  <li key={b.step_id} className="flex justify-between gap-2">
+                  <li key={b.step_id} className="flex items-center justify-between gap-3 px-3 py-2">
                     <span className="truncate">{b.title}</span>
-                    <span className="shrink-0 font-medium text-amber-700">−{formatScore(b.max_score - b.score)}</span>
+                    <span className="num shrink-0 font-semibold text-brand-ink-2">
+                      {formatScore(b.score)} из {formatScore(b.max_score)}
+                    </span>
                   </li>
                 ))}
               </ul>
             </Card>
-          )}
-          <Card className="p-6" accent="#7C4DFF">
-            <div className="font-medium">Ещё можно заработать</div>
-            {toEarn.length === 0 ? (
-              <p className="mt-1 text-sm text-content-secondary">Все оцениваемые задания выполнены.</p>
-            ) : (
-              <ul className="mt-2 space-y-1.5 text-sm">
-                {toEarn.slice(0, 8).map((s) => (
-                  <li key={s.id} className="flex items-center justify-between gap-2">
-                    <span className="truncate">{s.title}</span>
-                    <Badge color="#B45309">до {formatScore(s.max_score)}</Badge>
-                  </li>
-                ))}
-                {toEarn.length > 8 && <li className="text-content-secondary">и ещё {toEarn.length - 8}…</li>}
-              </ul>
-            )}
-          </Card>
-        </div>
+          </section>
+        )}
       </div>
     </>
   )

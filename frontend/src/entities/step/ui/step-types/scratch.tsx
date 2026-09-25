@@ -1,4 +1,4 @@
-import { Field, Input, Markdown } from '@/shared/ui'
+import { Field, Icon, Input, Markdown } from '@/shared/ui'
 import { str } from '../../lib/content'
 import { Criteria, CriteriaField, DefaultReviewView, ManualSubmitForm, MarkdownField } from '../common'
 import type { StepTypeDef } from '../../model/types'
@@ -11,11 +11,12 @@ function ScratchEmbed({ url, title }: { url: string; title: string }) {
   const id = scratchProjectId(url)
   if (!id) return null
   return (
-    <div className="overflow-hidden rounded-3xl bg-white shadow-lg shadow-orange-500/10">
-      <div className="flex items-center justify-between bg-gradient-to-r from-orange-400/20 to-amber-300/10 px-5 py-3 text-sm">
-        <span className="font-medium text-orange-700">{title}</span>
-        <a href={`https://scratch.mit.edu/projects/${id}/editor`} target="_blank" rel="noreferrer noopener" className="rounded-full bg-white/70 px-3 py-1 font-medium text-orange-700">
-          Открыть в редакторе Scratch ↗
+    <div className="overflow-hidden rounded-card border border-brand-line bg-white">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-brand-line px-5 py-3 text-sm">
+        <span className="font-semibold">{title}</span>
+        <a href={`https://scratch.mit.edu/projects/${id}/editor`} target="_blank" rel="noreferrer noopener" className="inline-flex items-center gap-1.5 font-semibold text-brand-blue hover:underline">
+          Открыть в редакторе Scratch
+          <Icon name="external" size={16} />
         </a>
       </div>
       <div className="aspect-[485/402] max-h-[480px] w-full">
@@ -29,9 +30,8 @@ export const scratchStep: StepTypeDef = {
   id: 'scratch',
   kind: 'task',
   label: 'Scratch',
-  description: 'Ученик разбирает блочную программу и показывает свой результат ссылкой на проект Scratch. Проверяет куратор.',
-  icon: '🐱',
-  color: '#F97316',
+  description: 'Разбор блочной конструкции, ученик показывает результат ссылкой на свой проект.',
+  icon: 'blocks',
   check: 'manual',
   defaultMaxScore: 20,
   defaultContent: () => ({ type: 'scratch', markdown: '', project_url: '', criteria: '' }),
@@ -57,10 +57,10 @@ export const scratchStep: StepTypeDef = {
         busy={busy}
         canSubmit={canSubmit}
         submit={submit}
-        linkLabel="Ссылка на ваш проект в Scratch"
+        linkLabel="Ссылка на твой проект в Scratch"
         linkPlaceholder="https://scratch.mit.edu/projects/…"
         linkRequired
-        textLabel="Объясните, как работает ваша программа"
+        textLabel="Объясни, как работает твоя программа"
         textPlaceholder="Какие блоки использовали и что происходит, когда нажимаешь на флажок"
       />
     </div>

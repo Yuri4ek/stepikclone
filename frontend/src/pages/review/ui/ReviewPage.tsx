@@ -1,11 +1,11 @@
 import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { DefaultReviewView, StepTypeBadge, str, typeFromContent } from '@/entities/step'
-import { reviewStatusMeta, submissionApi } from '@/entities/submission'
+import { submissionApi, submissionTone } from '@/entities/submission'
 import { ReviewForm } from '@/features/review-submission'
 import type { ReviewResult } from '@/shared/api'
-import { formatDate, formatScore, useAsync } from '@/shared/lib'
-import { Badge, Button, Card, ErrorBox, Loader, Markdown, Notice, PageHeader, ScorePill } from '@/shared/ui'
+import { formatDate, formatScore, waitLabel, useAsync } from '@/shared/lib'
+import { Button, Card, ErrorBox, Icon, Loader, Markdown, Notice, PageHeader, ScorePill, SectionLabel, StatusPill } from '@/shared/ui'
 
 export function ReviewPage() {
   const { submissionId = '' } = useParams()
@@ -37,37 +37,39 @@ export function ReviewPage() {
     }
   }
 
-  const st = reviewStatusMeta[result?.status ?? sub.status]
+  const tone = submissionTone({ status: result?.status ?? sub.status, check_type: 'manual' })
 
   return (
     <>
       <PageHeader
         eyebrow={
-          <Link to="/curator/queue" className="hover:text-brand-hover">
-            ← Очередь проверки
+          <Link to="/curator/queue" className="inline-flex items-center gap-1 hover:text-brand-blue">
+            <Icon name="arrowLeft" size={16} />
+            Очередь проверки
           </Link>
         }
         title={sub.step.title}
         subtitle={
-          <span className="flex flex-wrap items-center gap-2">
+          <span className="flex flex-wrap items-center gap-x-4 gap-y-2">
+            <StatusPill tone={tone} />
             <StepTypeBadge type={type} />
             <span>
-              {sub.student?.full_name ?? 'Ученик'} · сдано {formatDate(sub.created_at)}
+              {sub.student?.full_name ?? 'Ученик'} · работа отправлена {formatDate(sub.created_at)}
+              {pending && <span className="num">, ждёт {waitLabel(sub.created_at)}</span>}
             </span>
-            <Badge color={st.color}>{st.label}</Badge>
           </span>
         }
       />
 
       <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
         <div className="space-y-6">
-          <Card className="p-5" accent={type.color}>
-            <h2 className="mb-3 font-medium">Ответ ученика</h2>
+          <Card className="p-5">
+            <SectionLabel>Ответ ученика</SectionLabel>
             <View payload={sub.payload} content={sub.step.content} />
           </Card>
           {task && (
             <Card className="p-5">
-              <h2 className="mb-3 font-medium">Задание</h2>
+              <SectionLabel>Задание</SectionLabel>
               <Markdown className="prose-sm">{task}</Markdown>
             </Card>
           )}
@@ -76,7 +78,7 @@ export function ReviewPage() {
         <div className="space-y-4 lg:sticky lg:top-24 lg:self-start">
           {criteria && (
             <Card className="p-5">
-              <div className="mb-1 text-sm text-content-secondary">Критерии</div>
+              <SectionLabel>Критерии</SectionLabel>
               <Markdown className="prose-sm">{criteria}</Markdown>
             </Card>
           )}
@@ -84,16 +86,17 @@ export function ReviewPage() {
           {result ? (
             <Card className="p-5">
               <Notice tone={result.status === 'graded' ? 'success' : 'warning'}>
-                <div className="font-medium">{result.status === 'graded' ? '✓ Работа принята' : '↩ Работа возвращена'}</div>
+                <StatusPill tone={result.status === 'graded' ? 'done' : 'returned'} checkedBy={result.status === 'graded' ? 'manual' : null} />
                 {result.score !== null && (
                   <ScorePill className="mt-2">
                     {formatScore(result.score)} из {formatScore(max)}
                   </ScorePill>
                 )}
-                <div className="mt-1">Ученик уже видит результат и комментарий.</div>
+                <p className="mt-2">Ученик уже видит результат и комментарий, прогресс пересчитан.</p>
               </Notice>
               <Button className="mt-4 w-full" onClick={goNext} loading={loadingNext}>
-                Следующая работа →
+                Следующая работа
+                <Icon name="arrowRight" size={18} />
               </Button>
             </Card>
           ) : pending ? (

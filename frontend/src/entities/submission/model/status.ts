@@ -1,15 +1,10 @@
+import type { StatusTone } from '@/shared/ui'
 import type { SubmissionStatus } from '@/shared/api'
 
-/** Статус работы глазами ученика */
-export const submissionStatusMeta: Record<SubmissionStatus, { label: string; color: string }> = {
-  pending: { label: 'На проверке', color: '#D97706' },
-  graded: { label: 'Проверено', color: '#059669' },
-  returned: { label: 'Возвращено', color: '#EF4444' },
-}
-
-/** Статус работы глазами куратора */
-export const reviewStatusMeta: Record<SubmissionStatus, { label: string; color: string }> = {
-  pending: { label: 'Ждёт проверки', color: '#D97706' },
-  graded: { label: 'Принято', color: '#10B981' },
-  returned: { label: 'Возвращено', color: '#EF4444' },
+/** Статус работы → тон брендбука. Автопроверка с 0 баллов — «Не прошло тесты» */
+export function submissionTone(s: { status: SubmissionStatus; check_type?: 'auto' | 'manual'; score?: number | null }): StatusTone {
+  if (s.status === 'pending') return 'review'
+  if (s.status === 'returned') return 'returned'
+  if (s.check_type === 'auto' && s.score === 0) return 'failed'
+  return 'done'
 }

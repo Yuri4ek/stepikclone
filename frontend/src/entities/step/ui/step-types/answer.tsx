@@ -17,9 +17,8 @@ export const answerStep: StepTypeDef = {
   id: 'answer',
   kind: 'quiz',
   label: 'Задача с ответом',
-  description: 'Ученик вводит число или слово. Проверяется автоматически, результат — сразу.',
-  icon: '🔢',
-  color: '#0891B2',
+  description: 'Короткий ответ: число или слово. Проверяется автоматически, результат — сразу.',
+  icon: 'hash',
   check: 'auto',
   defaultMaxScore: 10,
   defaultContent: () => ({ type: 'answer', question: '', options: [], correct_option_id: '' }),
@@ -49,11 +48,11 @@ export const answerStep: StepTypeDef = {
         }}
       >
         <Markdown>{str(content, 'question')}</Markdown>
-        <Field label="Ваш ответ">
-          <Input value={value} onChange={(e) => setValue(e.target.value)} disabled={!canSubmit} className="max-w-xs text-base" autoComplete="off" />
+        <Field label="Твой ответ">
+          <Input value={value} onChange={(e) => setValue(e.target.value)} disabled={!canSubmit} className="max-w-xs" autoComplete="off" />
         </Field>
         <Button type="submit" loading={busy} disabled={!canSubmit || !value.trim()}>
-          Проверить
+          {step.progress.status === 'failed' ? 'Отправить снова' : 'Проверить'}
         </Button>
       </form>
     )

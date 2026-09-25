@@ -1,11 +1,12 @@
 import { Link, useParams } from 'react-router-dom'
 import { courseApi, flattenOutline, sortOutline } from '@/entities/course'
 import { useUser } from '@/entities/session'
+import { resolveStepType } from '@/entities/step'
 import { useEnrollCourse } from '@/features/enroll-course'
-import { OutlineTree } from '@/widgets/course-outline'
+import { CourseMap, OutlineTree } from '@/widgets/course-outline'
 import { ApiError, type NextStep } from '@/shared/api'
 import { formatPercent, plural, useAsync } from '@/shared/lib'
-import { Button, ButtonLink, Card, ErrorBox, Loader, Notice, PageHeader, ProgressBar, ScorePill } from '@/shared/ui'
+import { Button, ButtonLink, Card, ErrorBox, Icon, Loader, Notice, PageHeader, ProgressBar, SectionLabel, StatusPill } from '@/shared/ui'
 
 async function loadCourse(courseId: string) {
   const [outline, catalog] = await Promise.all([courseApi.outline(courseId), courseApi.catalog()])
@@ -25,6 +26,7 @@ export function CoursePage() {
   const user = useUser()
   const { data, error, loading, reload } = useAsync(() => loadCourse(courseId), [courseId])
   const { enroll, busy: enrolling, error: enrollError } = useEnrollCourse(courseId, reload)
+  const student = user.role === 'student'
 
   if (loading && !data) return <Loader />
   if (error) return <ErrorBox error={error} onRetry={reload} />
@@ -35,91 +37,113 @@ export function CoursePage() {
   const flat = flattenOutline(outline)
   const returned = flat.filter((s) => s.progress.status === 'returned')
   const submitted = flat.filter((s) => s.progress.status === 'submitted')
-  const step = next?.current_step
+  const current = next?.current_step ? flat.find((s) => s.id === next.current_step!.id) : undefined
+  const passed = flat.filter((s) => s.progress.status === 'passed').length
+  const percent = next?.percent ?? course?.enrollment?.percent ?? 0
 
   return (
     <>
       <PageHeader
         eyebrow={
-          <Link to={user.role === 'student' ? '/learn' : '/catalog'} className="hover:text-brand-hover">
-            ← {user.role === 'student' ? 'Моё обучение' : 'Каталог'}
+          <Link to={student ? '/learn' : '/catalog'} className="inline-flex items-center gap-1 hover:text-brand-blue">
+            <Icon name="arrowLeft" size={16} />
+            {student ? 'На главную' : 'Все курсы'}
           </Link>
         }
         title={outline.course.title}
-        subtitle={course?.description}
+        subtitle={outline.course.description}
       />
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
+      {enrolled && flat.length > 0 && (
+        <Card className="mb-6 p-5">
+          <SectionLabel>Карта курса · где я и что дальше</SectionLabel>
+          <CourseMap steps={flat} currentId={current?.id} courseId={courseId} />
+        </Card>
+      )}
+
+      <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
         <div className="order-2 lg:order-1">
-          <OutlineTree outline={outline} enrolled={enrolled} currentId={step?.id} />
+          <OutlineTree outline={outline} enrolled={enrolled} currentId={current?.id} />
         </div>
 
         <aside className="order-1 space-y-4 lg:order-2">
           {enrolled && course ? (
             <>
               <Card className="p-5">
-                <div className="flex items-end justify-between">
-                  <div>
-                    <div className="text-sm text-content-secondary">Прогресс</div>
-                    <div className="text-3xl font-medium">{formatPercent(next?.percent ?? course.enrollment!.percent)}</div>
-                  </div>
-                  <ScorePill className="text-sm">{Math.round(course.enrollment!.rating_score)} рейтинг</ScorePill>
+                <div className="flex items-baseline justify-between">
+                  <span className="font-bold">Прогресс</span>
+                  <span className="num text-brand-ink-2">
+                    {passed} из {flat.length}
+                  </span>
                 </div>
-                <ProgressBar value={next?.percent ?? course.enrollment!.percent} className="mt-3" />
-                <div className="mt-5 rounded-3xl bg-brand/8 p-5">
-                  <div className="text-sm text-content-secondary">Следующий шаг</div>
-                  {step ? (
+                <ProgressBar value={percent} className="mt-3" />
+                <div className="mt-2 text-sm text-brand-ink-3">
+                  <span className="num">{formatPercent(percent)}</span> обязательных шагов пройдено
+                </div>
+
+                <div className="mt-5 border-t border-brand-line pt-5">
+                  <div className="eyebrow text-brand-ink-3">Следующий шаг</div>
+                  {current ? (
                     <>
-                      <div className="mt-1 font-medium">{step.title}</div>
-                      <div className="text-sm text-content-secondary">{step.action_hint}</div>
-                      <ButtonLink to={`/courses/${courseId}/steps/${step.id}`} className="mt-3 w-full">
-                        Перейти к шагу →
+                      <div className="mt-1 text-lg font-bold">{current.title}</div>
+                      <div className="text-sm text-brand-ink-2">
+                        {resolveStepType(current.kind, null, current.id).label} · шаг {current.index} из {flat.length}
+                      </div>
+                      <ButtonLink to={`/courses/${courseId}/steps/${current.id}`} className="mt-4 w-full">
+                        Продолжить
+                        <Icon name="arrowRight" size={18} />
                       </ButtonLink>
                     </>
                   ) : (
-                    <div className="mt-1 font-medium text-status-success">🏆 {next?.message ?? 'Курс пройден'}</div>
+                    <div className="mt-2">
+                      <StatusPill tone="done" label="Курс пройден" />
+                    </div>
                   )}
                 </div>
                 <ButtonLink to={`/courses/${courseId}/progress`} variant="secondary" className="mt-3 w-full">
-                  Из чего сложился рейтинг
+                  Из чего сложились баллы
                 </ButtonLink>
               </Card>
 
               {returned.length > 0 && (
-                <Card className="p-5" accent="#EF4444">
-                  <div className="font-medium">↩ Возвращено на доработку</div>
-                  <p className="mt-1 text-sm text-content-secondary">Куратор оставил комментарий — исправьте и отправьте снова.</p>
+                <div className="rounded-card border border-brand-amber/30 bg-brand-amber-50 p-5 text-brand-night">
+                  <StatusPill tone="returned" />
+                  <p className="mt-2 text-sm">Куратор оставил комментарий — поправь и отправь снова.</p>
                   <div className="mt-2 space-y-1">
                     {returned.map((s) => (
-                      <Link key={s.id} to={`/courses/${courseId}/steps/${s.id}`} className="block text-sm font-medium text-brand-hover hover:underline">
+                      <Link key={s.id} to={`/courses/${courseId}/steps/${s.id}`} className="block font-semibold text-brand-amber-text hover:underline">
                         {s.title}
                       </Link>
                     ))}
                   </div>
-                </Card>
+                </div>
               )}
               {submitted.length > 0 && (
-                <Card className="p-5" accent="#F59E0B">
-                  <div className="font-medium">⏳ На проверке у куратора</div>
-                  <p className="mt-1 text-sm text-content-secondary">
-                    {submitted.length} {plural(submitted.length, 'работа', 'работы', 'работ')}. Следующий шаг откроется, когда куратор примет работу.
+                <Notice tone="review">
+                  <StatusPill tone="review" />
+                  <p className="mt-2">
+                    <span className="num">{submitted.length}</span> {plural(submitted.length, 'работа ждёт', 'работы ждут', 'работ ждут')} куратора. Результат появится на шаге.
                   </p>
-                </Card>
+                </Notice>
               )}
             </>
-          ) : user.role === 'student' ? (
+          ) : student ? (
             <Card className="p-5">
-              <div className="font-medium">Запишитесь, чтобы начать</div>
-              <p className="mt-1 text-sm text-content-secondary">
-                {flat.length} {plural(flat.length, 'шаг', 'шага', 'шагов')} · прогресс и рейтинг будут видны сразу
+              <div className="text-lg font-bold">Начни этот курс</div>
+              <p className="mt-1 text-sm text-brand-ink-2">
+                <span className="num">{flat.length}</span> {plural(flat.length, 'шаг', 'шага', 'шагов')}. Прогресс и баллы видны сразу после первого шага.
               </p>
-              {enrollError && <div className="mt-3"><ErrorBox error={enrollError} /></div>}
+              {enrollError && (
+                <div className="mt-3">
+                  <ErrorBox error={enrollError} />
+                </div>
+              )}
               <Button onClick={enroll} loading={enrolling} className="mt-4 w-full">
-                Записаться на курс
+                Начать курс
               </Button>
             </Card>
           ) : (
-            <Notice>Вы смотрите программу курса. Прохождение шагов доступно ученикам.</Notice>
+            <Notice>Вы смотрите программу курса. Проходить шаги могут ученики.</Notice>
           )}
         </aside>
       </div>

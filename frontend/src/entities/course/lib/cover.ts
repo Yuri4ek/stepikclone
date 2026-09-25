@@ -1,15 +1,8 @@
 import type { CSSProperties } from 'react'
 import { mediaUrl } from '@/shared/api'
 
-// Обложки курсов по умолчанию — оттенки синего и фиолетового
-const COVERS = [
-  'linear-gradient(135deg,#3D5AFE,#40C4FF)',
-  'linear-gradient(135deg,#7C4DFF,#3D5AFE)',
-  'linear-gradient(135deg,#6366F1,#A855F7)',
-  'linear-gradient(135deg,#2563EB,#7C3AED)',
-  'linear-gradient(135deg,#8B5CF6,#EC4899)',
-  'linear-gradient(135deg,#0EA5E9,#6366F1)',
-]
+// Обложки по умолчанию — плоские цвета бренда (градиенты на карточках брендбук запрещает)
+const COVERS = ['#3457F0', '#0B1220', '#2641C9', '#131C30']
 
 export function courseCover(id: string) {
   let h = 0
@@ -17,12 +10,13 @@ export function courseCover(id: string) {
   return COVERS[h % COVERS.length]
 }
 
-/** Фон обложки: загруженная картинка (с затемнением под белый текст) или градиент */
+/** Фон обложки: загруженная картинка с ровным затемнением под белый текст или плоский цвет */
 export function courseCoverStyle(course: { id: string; cover_url?: string | null }): CSSProperties {
   const url = mediaUrl(course.cover_url)
-  if (!url) return { backgroundImage: courseCover(course.id) }
+  if (!url) return { backgroundColor: courseCover(course.id) }
   return {
-    backgroundImage: `linear-gradient(135deg, rgb(27 30 63 / 0.55), rgb(61 90 254 / 0.25)), url("${url}")`,
+    backgroundColor: '#0B1220',
+    backgroundImage: `linear-gradient(rgb(11 18 32 / 0.45), rgb(11 18 32 / 0.45)), url("${url}")`,
     backgroundSize: 'cover',
     backgroundPosition: 'center',
   }
