@@ -7,20 +7,22 @@ import { ButtonLink, Icon } from '@/shared/ui'
 const actionText: Partial<Record<StepStatus, string>> = {
   returned: 'Куратор вернул работу — поправь и отправь снова',
   failed: 'Попробуй ещё раз — результат будет сразу',
-  submitted: 'Работа у куратора. Результат появится на шаге',
+  submitted: 'Работа у куратора — можно идти дальше',
 }
 
 /**
  * «Следующий шаг» — самый крупный элемент главного экрана ученика (брендбук, принцип 1).
  * Тёмное свечение здесь — единственный разрешённый градиент.
  */
-export function NextStepCard({ courseId, courseTitle, step, total, className }: { courseId: string; courseTitle: string; step: FlatStep | null; total: number; className?: string }) {
+export function NextStepCard({ courseId, courseTitle, step, total, waiting = 0, className }: { courseId: string; courseTitle: string; step: FlatStep | null; total: number; waiting?: number; className?: string }) {
   if (!step) {
     return (
       <section className={cx('night-glow overflow-hidden rounded-card p-6 text-white sm:p-8', className)}>
-        <div className="eyebrow text-brand-sky">Курс пройден</div>
-        <h2 className="mt-3 text-[28px] leading-tight font-extrabold sm:text-4xl">Все шаги курса «{courseTitle}» зачтены</h2>
-        <p className="mt-3 max-w-xl text-white/70">Загляни в итоги: там видно, из чего сложились твои баллы.</p>
+        <div className="eyebrow text-brand-sky">{waiting ? 'Ждём куратора' : 'Курс пройден'}</div>
+        <h2 className="mt-3 text-[28px] leading-tight font-extrabold sm:text-4xl">{waiting ? `Все шаги курса «${courseTitle}» сданы` : `Все шаги курса «${courseTitle}» зачтены`}</h2>
+        <p className="mt-3 max-w-xl text-white/70">
+          {waiting ? 'Осталось дождаться проверки работ. А пока загляни в итоги: там видно, из чего сложились твои баллы.' : 'Загляни в итоги: там видно, из чего сложились твои баллы.'}
+        </p>
         <ButtonLink to={`/courses/${courseId}/progress`} size="lg" variant="dark" className="mt-6">
           Посмотреть итоги
           <Icon name="arrowRight" size={20} />
@@ -28,7 +30,7 @@ export function NextStepCard({ courseId, courseTitle, step, total, className }: 
       </section>
     )
   }
-  const type = resolveStepType(step.kind, null, step.id)
+  const type = resolveStepType(step.kind, step.type)
   const hint = actionText[step.progress.status]
   return (
     <section className={cx('night-glow overflow-hidden rounded-card p-6 text-white sm:p-8', className)}>

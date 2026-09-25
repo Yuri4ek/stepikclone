@@ -1,7 +1,6 @@
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -24,7 +23,10 @@ from app.slices.course_builder.schemas import (
     StepCreate,
     StepOut,
     StepUpdate,
+    StudentAssign,
+    UserCreate,
 )
+from app.steps import registry
 
 router = APIRouter()
 admin_dep = require_roles(UserRole.admin)
@@ -36,17 +38,20 @@ def list_users(
     db: Session = Depends(get_db),
     _: User = Depends(admin_dep),
 ) -> list[dict]:
-    q = select(User).order_by(User.full_name)
-    if role:
-        try:
-            role_enum = UserRole(role)
-        except ValueError as exc:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid role") from exc
-        q = q.where(User.role == role_enum)
-    rows = db.scalars(q).all()
+    return service.list_users(db, role)
+
+
+@router.post("/users", status_code=201)
+def create_user(body: UserCreate, db: Session = Depends(get_db), _: User = Depends(admin_dep)) -> dict:
+    return service.create_user(db, body)
+
+
+@router.get("/step-kinds")
+def step_kinds(_: User = Depends(admin_dep)) -> list[dict]:
+    """Механизмы проверки, которые знает сервер (реестр app/steps/registry.py)."""
     return [
-        {"id": u.id, "email": u.email, "full_name": u.full_name, "role": u.role.value}
-        for u in rows
+        {"kind": c.kind, "mode": c.mode, "label": c.label, "default_type": c.default_type}
+        for c in registry.all_checkers()
     ]
 
 
@@ -80,6 +85,12 @@ def patch_course(
 @router.post("/courses/{course_id}/publish", response_model=CourseOut)
 def publish(course_id: uuid.UUID, db: Session = Depends(get_db), _: User = Depends(admin_dep)) -> CourseOut:
     return service.publish_course(db, course_id)
+
+
+@router.post("/courses/{course_id}/unpublish", response_model=CourseOut)
+def unpublish(course_id: uuid.UUID, db: Session = Depends(get_db), _: User = Depends(admin_dep)) -> CourseOut:
+    """Снять с публикации: курс пропадёт из каталога, у записанных учеников останется."""
+    return service.publish_course(db, course_id, published=False)
 
 
 @router.post("/courses/{course_id}/modules", response_model=ModuleOut, status_code=201)
@@ -165,6 +176,36 @@ def assign_curator(
     _: User = Depends(admin_dep),
 ) -> dict:
     return service.assign_curator(db, course_id, body.user_id)
+
+
+@router.delete("/courses/{course_id}/curators/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
+def unassign_curator(
+    course_id: uuid.UUID, user_id: uuid.UUID, db: Session = Depends(get_db), _: User = Depends(admin_dep)
+) -> None:
+    service.unassign_curator(db, course_id, user_id)
+
+
+@router.get("/courses/{course_id}/people")
+def course_people(course_id: uuid.UUID, db: Session = Depends(get_db), _: User = Depends(admin_dep)) -> dict:
+    """Кураторы и ученики курса."""
+    return service.course_people(db, course_id)
+
+
+@router.post("/courses/{course_id}/students", status_code=201)
+def enroll_student(
+    course_id: uuid.UUID,
+    body: StudentAssign,
+    db: Session = Depends(get_db),
+    _: User = Depends(admin_dep),
+) -> dict:
+    return service.enroll_student(db, course_id, body.user_id)
+
+
+@router.delete("/courses/{course_id}/students/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
+def unenroll_student(
+    course_id: uuid.UUID, user_id: uuid.UUID, db: Session = Depends(get_db), _: User = Depends(admin_dep)
+) -> None:
+    service.unenroll_student(db, course_id, user_id)
 
 
 router.include_router(uploads_router)

@@ -4,8 +4,8 @@ import { ButtonLink, Card, Icon, StatusPill, type IconName, type StatusTone } fr
 
 const roles: { role: 'student' | 'curator' | 'admin'; icon: IconName; points: string[] }[] = [
   { role: 'student', icon: 'flag', points: ['Проходит курс в своём темпе', 'Сразу видит результат автопроверки', 'Всегда знает следующий шаг', 'Понимает, из чего сложились баллы'] },
-  { role: 'curator', icon: 'inbox', points: ['Проверяет то, что не проверит машина', 'Возвращает работу с комментарием', 'Видит отставание раньше, чем ученик бросит'] },
-  { role: 'admin', icon: 'layers', points: ['Собирает курс из шагов разных типов', 'Публикует и меняет курсы', 'Назначает кураторов'] },
+  { role: 'curator', icon: 'inbox', points: ['Проверяет то, что не проверит машина', 'Возвращает работу с комментарием', 'Отвечает на вопросы по шагам', 'Видит отставание раньше, чем ученик бросит'] },
+  { role: 'admin', icon: 'layers', points: ['Собирает курс из шагов разных типов', 'Публикует, меняет и снимает курсы', 'Назначает кураторов и учеников'] },
 ]
 
 const statuses: StatusTone[] = ['done', 'review', 'returned', 'failed', 'progress', 'idle']

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { StepTypeBadge, checkLabels, type StepTypeDef } from '@/entities/step'
+import { StepTypeBadge, checkLabels, studentView, type StepTypeDef } from '@/entities/step'
 import type { AdminStep, LearningStep, StepContent } from '@/shared/api'
 import { Button, Card, ErrorBox, Field, Icon, Input, Notice, Segmented } from '@/shared/ui'
 import { stepEditorApi } from '../api/stepEditorApi'
@@ -16,17 +16,20 @@ interface Props {
 }
 
 function previewStep(type: StepTypeDef, title: string, maxScore: number, content: StepContent): LearningStep {
-  // Как ученик увидит шаг: ответ на quiz бэкенд не отдаёт — убираем и тут
-  const { correct_option_id: _hidden, ...visible } = content
-  void _hidden
+  // Как ученик увидит шаг: правильные ответы, критерии, эталон и скрытые тесты бэкенд не отдаёт — убираем и тут
   return {
     id: 'preview',
     title: title || type.label,
     kind: type.kind,
+    type: type.id,
     max_score: maxScore,
-    content: visible,
+    content: studentView(content),
     progress: { status: 'available', score: null, feedback: null },
   }
+}
+
+function PreviewPlayer({ type, step }: { type: StepTypeDef; step: LearningStep }) {
+  return <type.Player step={step} content={step.content} busy={false} canSubmit={false} submit={() => {}} complete={() => {}} />
 }
 
 export function StepEditorPanel({ type, step, lessonId, nextPosition, onSaved, onDeleted, onCancel }: Props) {
@@ -76,7 +79,7 @@ export function StepEditorPanel({ type, step, lessonId, nextPosition, onSaved, o
       <div className="flex flex-wrap items-center gap-3 border-b border-brand-line px-6 py-4">
         <StepTypeBadge type={type} />
         <span className="eyebrow text-brand-ink-3">
-          {checkLabels[type.check]} · kind <code className="font-mono normal-case">{type.kind}</code>
+          {checkLabels[type.check]} · <code className="font-mono normal-case">{type.kind}</code> / <code className="font-mono normal-case">{type.id}</code>
         </span>
         <Segmented
           className="ml-auto"
@@ -113,7 +116,7 @@ export function StepEditorPanel({ type, step, lessonId, nextPosition, onSaved, o
           <div className="role-student rounded-card border border-brand-line bg-brand-mist p-6">
             <div className="eyebrow mb-2 text-brand-ink-3">Так шаг увидит ученик</div>
             <h2 className="mb-4 text-[28px] font-extrabold tracking-tight">{title}</h2>
-            <type.Player step={previewStep(type, title, maxScore, content)} content={previewStep(type, title, maxScore, content).content} busy={false} canSubmit={false} submit={() => {}} complete={() => {}} />
+            <PreviewPlayer type={type} step={previewStep(type, title, maxScore, content)} />
           </div>
         )}
 

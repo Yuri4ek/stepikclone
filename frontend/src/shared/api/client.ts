@@ -40,7 +40,7 @@ function detailToMessage(detail: unknown, status: number): string {
 
 // FastAPI сериализует Decimal строкой ("10.00"). Приводим числовые поля к number,
 // иначе ломаются formatScore/toFixed, суммы превращаются в склейку строк, а сравнения с 0 врут.
-const NUMERIC_KEYS = new Set(['percent', 'rating_score', 'max_score', 'score', 'best_score', 'progress_percent', 'total_score', 'total_max'])
+const NUMERIC_KEYS = new Set(['percent', 'rating_score', 'max_score', 'score', 'best_score', 'progress_percent', 'total_score', 'total_max', 'pending_max'])
 
 function normalizeNumbers(value: unknown): unknown {
   if (Array.isArray(value)) return value.map(normalizeNumbers)
@@ -66,7 +66,7 @@ export async function request<T>(
   method: string,
   path: string,
   body?: unknown,
-  query?: Record<string, string | number | undefined | null>,
+  query?: Record<string, string | number | boolean | undefined | null>,
 ): Promise<T> {
   const url = new URL(API_URL + path)
   for (const [k, v] of Object.entries(query ?? {})) {
@@ -120,7 +120,7 @@ export async function upload<T>(path: string, file: File): Promise<T> {
 }
 
 export const http = {
-  get: <T>(path: string, query?: Record<string, string | number | undefined | null>) =>
+  get: <T>(path: string, query?: Record<string, string | number | boolean | undefined | null>) =>
     request<T>('GET', path, undefined, query),
   post: <T>(path: string, body?: unknown) => request<T>('POST', path, body ?? {}),
   patch: <T>(path: string, body: unknown) => request<T>('PATCH', path, body),

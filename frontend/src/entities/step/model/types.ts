@@ -2,7 +2,7 @@ import type { FC } from 'react'
 import type { Answers, LearningStep, StepContent, StepKind } from '@/shared/api'
 import type { IconName } from '@/shared/ui'
 
-/** tests — прогон по тестам сразу у ученика + подтверждение куратором */
+/** none — при прочтении, auto — ответ проверяется сразу, tests — прогон по тестам на сервере, manual — куратор */
 export type CheckMode = 'none' | 'auto' | 'tests' | 'manual'
 
 export interface EditorProps {
@@ -27,9 +27,9 @@ export interface ReviewViewProps {
 }
 
 /**
- * Описание типа шага. Бэкенд знает только 4 `kind` (theory/quiz/task/code) и хранит
- * произвольный JSON в `content`. Тип шага на платформе — это `content.type` + способ проверки,
- * поэтому новый тип (например, «Робототехника») добавляется одним модулем без изменения API и БД.
+ * Описание типа шага. Бэкенд знает механизмы проверки (`kind`: theory/quiz/task/code, реестр
+ * app/steps/registry.py) и хранит произвольный JSON в `content`. Тип шага на платформе — это `content.type`
+ * + механизм проверки, поэтому новый тип (например, «Робототехника») добавляется одним модулем без изменения API и БД.
  */
 export interface StepTypeDef {
   /** Значение content.type */
@@ -46,7 +46,9 @@ export interface StepTypeDef {
   defaultContent: () => StepContent
   Editor: FC<EditorProps>
   Player: FC<PlayerProps>
-  /** Как куратор видит ответ ученика; по умолчанию — текст + ссылка */
+  /** Короткое пояснение в выборе типа: из какого раздела пакета содержания */
+  group?: string
+  /** Как куратор видит ответ ученика; по умолчанию — текст, ссылка и скриншот */
   ReviewView?: FC<ReviewViewProps>
   /** Проверка контента перед сохранением; возвращает текст ошибки */
   validate?: (content: StepContent) => string | null

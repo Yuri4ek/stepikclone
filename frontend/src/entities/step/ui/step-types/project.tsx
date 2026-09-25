@@ -1,51 +1,57 @@
-import { Field, Markdown, Select } from '@/shared/ui'
-import { str } from '../../lib/content'
-import { Criteria, CriteriaField, ManualSubmitForm, MarkdownField } from '../common'
+import { Markdown } from '@/shared/ui'
+import { str, submitConfig, type SubmitConfig } from '../../lib/content'
+import { BLOCKS_HINT, CriteriaField, DefaultReviewView, ManualSubmitForm, MarkdownField, SubmitConfigField } from '../common'
+import { ScratchEmbed } from './scratch'
 import type { StepTypeDef } from '../../model/types'
 
-/** Любая работа, которую нельзя проверить машиной: проект, файл, ссылка на результат */
+/** Старое поле answer_format → новая настройка «что сдаёт ученик» */
+function legacyDefaults(format: string): SubmitConfig {
+  if (format === 'link') return { link: 'required', screenshot: 'off', text: 'optional' }
+  if (format === 'both') return { link: 'required', screenshot: 'off', text: 'required' }
+  return { link: 'optional', screenshot: 'optional', text: 'required' }
+}
+
+/** Самостоятельная работа по критериям: ссылка, скриншот и/или текст — проверяет куратор */
 export const projectStep: StepTypeDef = {
   id: 'project',
   kind: 'task',
   label: 'Проект',
-  description: 'Файл или ссылка на результат, уходит куратору в очередь.',
+  description: 'Самостоятельная работа по критериям. Ученик сдаёт ссылку, скриншот или текст — проверяет куратор.',
+  group: 'Любой курс',
   icon: 'upload',
   check: 'manual',
-  defaultMaxScore: 20,
-  defaultContent: () => ({ type: 'project', markdown: '', answer_format: 'text', criteria: '' }),
+  defaultMaxScore: 25,
+  defaultContent: () => ({ type: 'project', markdown: '', criteria: '', submit: { link: 'required', screenshot: 'optional', text: 'optional' }, link_kind: 'any' }),
   validate: (c) => (str(c, 'markdown').trim() ? null : 'Опишите задание'),
 
   Editor: ({ content, onChange }) => (
     <div className="space-y-4">
-      <MarkdownField label="Задание" rows={8} value={str(content, 'markdown')} onChange={(markdown) => onChange({ ...content, markdown })} />
-      <Field label="Формат сдачи">
-        <Select value={str(content, 'answer_format') || 'text'} onChange={(e) => onChange({ ...content, answer_format: e.target.value })} className="max-w-xs">
-          <option value="text">Текстовый ответ</option>
-          <option value="link">Ссылка на результат (файл, диск, репозиторий)</option>
-          <option value="both">Текст и ссылка</option>
-        </Select>
-      </Field>
+      <MarkdownField label="Задание" rows={12} value={str(content, 'markdown')} onChange={(markdown) => onChange({ ...content, markdown })} hint={BLOCKS_HINT} />
+      <SubmitConfigField content={content} onChange={onChange} defaults={legacyDefaults(str(content, 'answer_format'))} />
       <CriteriaField content={content} onChange={onChange} />
     </div>
   ),
 
-  Player: ({ step, content, busy, canSubmit, submit }) => {
-    const format = str(content, 'answer_format') || 'text'
-    return (
-      <div className="space-y-5">
-        <Markdown>{str(content, 'markdown')}</Markdown>
-        <Criteria content={content} />
-        <ManualSubmitForm
-          stepId={step.id}
-          busy={busy}
-          canSubmit={canSubmit}
-          submit={submit}
-          linkLabel={format === 'text' ? undefined : 'Ссылка на файл или результат'}
-          linkPlaceholder="https://disk.yandex.ru/…"
-          linkRequired={format === 'link'}
-          textLabel={format === 'link' ? 'Комментарий (можно не заполнять)' : 'Ответ'}
-        />
-      </div>
-    )
-  },
+  Player: ({ step, content, busy, canSubmit, submit }) => (
+    <div className="space-y-6">
+      <Markdown>{str(content, 'markdown')}</Markdown>
+      <ManualSubmitForm
+        stepId={step.id}
+        busy={busy}
+        canSubmit={canSubmit}
+        submit={submit}
+        config={submitConfig(content, legacyDefaults(str(content, 'answer_format')))}
+        linkKind={str(content, 'link_kind') || 'any'}
+        textLabel="Объясни решение"
+        textPlaceholder="Какие блоки и циклы использовал и зачем"
+      />
+    </div>
+  ),
+
+  ReviewView: ({ payload }) => (
+    <div className="space-y-4">
+      <ScratchEmbed url={str(payload, 'link')} title="Проект ученика" />
+      <DefaultReviewView payload={payload} />
+    </div>
+  ),
 }

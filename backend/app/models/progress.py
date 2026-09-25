@@ -73,7 +73,9 @@ class CourseProgress(Base):
     completed_steps: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     total_required_steps: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     percent: Mapped[Decimal] = mapped_column(Numeric(5, 2), default=Decimal("0"), nullable=False)
-    current_step_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("steps.id"), nullable=True)
+    current_step_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("steps.id", ondelete="SET NULL"), nullable=True
+    )
     rating_score: Mapped[Decimal] = mapped_column(Numeric(8, 2), default=Decimal("0"), nullable=False)
     rating_breakdown: Mapped[dict] = mapped_column(JSONB, default=dict, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(

@@ -1,5 +1,6 @@
 from app.core.database import Base
 from app.models.course import Course, CourseCurator, Lesson, Module, Step
+from app.models.question import StepQuestion
 from app.models.progress import CourseProgress, Enrollment, StepProgress
 from app.models.submission import Submission
 from app.models.user import User
@@ -16,4 +17,5 @@ __all__ = [
     "StepProgress",
     "CourseProgress",
     "Submission",
+    "StepQuestion",
 ]

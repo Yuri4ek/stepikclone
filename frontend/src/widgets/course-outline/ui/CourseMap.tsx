@@ -24,7 +24,7 @@ export function CourseMap({ steps, currentId, courseId, compact }: { steps: Flat
     <div ref={scroller} className="overflow-x-auto pb-1">
       <ol className="flex min-w-max items-start px-2 pt-2">
         {steps.map((s, i) => {
-          const type = resolveStepType(s.kind, null, s.id)
+          const type = resolveStepType(s.kind, s.type)
           const st = s.progress.status
           const tone = stepTone[st]
           const meta = stepStatusMeta(st)

@@ -17,6 +17,7 @@ const nav: Record<Role, { to: string; label: string; icon: IconName }[]> = {
     { to: '/curator', label: 'Обзор', icon: 'chart' },
     { to: '/curator/queue', label: 'Очередь проверки', icon: 'inbox' },
     { to: '/curator/lag', label: 'Ученики', icon: 'users' },
+    { to: '/curator/questions', label: 'Вопросы', icon: 'message' },
     { to: '/catalog', label: 'Курсы', icon: 'grid' },
   ],
   admin: [
@@ -25,6 +26,7 @@ const nav: Record<Role, { to: string; label: string; icon: IconName }[]> = {
     { to: '/curator', label: 'Обзор', icon: 'chart' },
     { to: '/curator/queue', label: 'Очередь проверки', icon: 'inbox' },
     { to: '/curator/lag', label: 'Ученики', icon: 'user' },
+    { to: '/curator/questions', label: 'Вопросы', icon: 'message' },
   ],
 }
 

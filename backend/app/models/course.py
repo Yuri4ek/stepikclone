@@ -16,6 +16,13 @@ class CourseStatus(str, enum.Enum):
 
 
 class StepKind(str, enum.Enum):
+    """Механизмы проверки, известные платформе из коробки.
+
+    Колонка steps.kind — строка, а не enum БД: новый механизм добавляется записью
+    в app/steps/registry.py без миграции. Тип шага для ученика (Scratch, Minecraft…)
+    хранится в content.type и тоже не требует изменений схемы.
+    """
+
     theory = "theory"
     quiz = "quiz"
     task = "task"
@@ -30,6 +37,8 @@ class Course(Base):
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[str] = mapped_column(Text, default="", nullable=False)
     cover_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    # Паспорт курса: классы, объём, инструмент, цель — свободный JSON, чтобы добавлять поля без миграций
+    passport: Mapped[dict] = mapped_column(JSONB, default=dict, nullable=False)
     status: Mapped[CourseStatus] = mapped_column(
         Enum(CourseStatus, name="course_status"), default=CourseStatus.draft, nullable=False
     )
@@ -75,7 +84,7 @@ class Step(Base):
     lesson_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("lessons.id", ondelete="CASCADE"))
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     position: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
-    kind: Mapped[StepKind] = mapped_column(Enum(StepKind, name="step_kind"), nullable=False)
+    kind: Mapped[str] = mapped_column(String(32), nullable=False)
     content: Mapped[dict] = mapped_column(JSONB, default=dict, nullable=False)
     max_score: Mapped[Decimal] = mapped_column(Numeric(8, 2), default=Decimal("0"), nullable=False)
     is_required: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)

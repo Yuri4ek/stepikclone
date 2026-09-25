@@ -1,12 +1,11 @@
-# StepikClone backend (FastAPI)
+# КодСтарт — backend (FastAPI)
 
 ## Запуск
 
 ```bash
-# 1. Postgres
-cd postgres && docker compose up -d && cd ..
+# из корня репозитория: Postgres на порту 5433
+docker compose up -d db
 
-# 2. Backend
 cd backend
 python3 -m venv .venv
 source .venv/bin/activate
@@ -14,33 +13,66 @@ pip install -r requirements.txt
 cp .env.example .env
 
 alembic upgrade head
-PYTHONPATH=. python -m app.seed.run --force
+PYTHONPATH=. python -m app.seed.run --force   # --legacy добавит старые курсы-заглушки
 
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-Postgres в Docker: порт **5433**.
+- API: http://localhost:8000, Swagger: http://localhost:8000/docs, загрузки: `/uploads/...`
+- В Docker (`docker compose up --build` из корня) миграции и seed выполняются при старте контейнера
+  (`docker-entrypoint.sh`; `SEED_DEMO=0` отключает seed). Seed без `--force` существующие данные не трогает.
 
-- API: http://localhost:8000  
-- Swagger: http://localhost:8000/docs  
-- Uploads: http://localhost:8000/uploads/...  
+## Демо-данные
 
-Локальная шпаргалка по данным БД (в gitignore): `backend/DATA.md`.
+Курсы — базовый пакет учебного содержания Федерации (`app/seed/package_courses.py`): «Первые программы в Scratch»,
+«Minecraft Education: программируем агента», «Алгоритмика: первые задачи на Python» — 9 модулей, 30 шагов.
+При заливке эталонные решения прогоняются по всем тестам задач — seed падает, если тест перенесён с ошибкой.
 
-## Демо-логины (password `demo1234`)
+Пароль у всех `demo1234`: `admin@`, `curator@`, `curator2@`, `student@` (Анна), `ivan@`, `maria@`, `dima@`,
+`sofia@`, `artem@`, `polina@`, `kirill@`, `eva@`, `timur@`, `new@example.com`.
 
-| email | role |
-|-------|------|
-| admin@example.com | admin |
-| curator@example.com | curator |
-| student@example.com | student |
-| ivan@example.com | student |
+## Модель шага
 
-## Курсы в seed
+Шаг = `kind` (механизм проверки) + `content` (JSON; `content.type` — как шаг выглядит у ученика).
+Механизмы — реестр `app/steps/registry.py`:
 
-`python-setup` · `python-first-steps` · `codeolymp-start` · `algo-intro`  
-У курсов есть `cover_url`; админ может загрузить обложку: `POST /api/v1/admin/courses/{id}/cover`.
+| kind | Проверка | Что сдаёт ученик |
+|---|---|---|
+| `theory` | засчитывается при прочтении (`POST /learning/steps/{id}/complete`) | — |
+| `quiz` | сразу: `selected_option_id` / `selected_option_ids` / `answer` | выбор, число, слово |
+| `code` | сразу: прогон на сервере по всем тестам (`app/steps/judge.py`) | `code` на Python 3 |
+| `task` | куратор (очередь `/reviews/queue`) | `text`, `link`, `screenshot_url` |
 
-## Срезы
+Новый механизм — одна запись `register(Checker(...))`: колонка `steps.kind` — строка, миграция не нужна.
+Поля `correct_*`, `accepted_answers`, `criteria`, `reference_solution`, `hint`, `explanation` и тесты без `sample: true`
+ученику не отдаются (`registry.public_content`).
 
-`auth` · `course_builder` · `catalog` · `learning` · `reviews` · `progress` · `lag`
+Прогон решений: отдельный процесс на тест, лимиты CPU / памяти (`RLIMIT_AS`, на Linux) / размера вывода,
+не больше `JUDGE_CONCURRENCY` (4) прогонов одновременно. В контейнере решение выполняется от пользователя `judge`
+без доступа к `/backend`. Сеть не отключена — для продакшена прогон нужно вынести в изолированный воркер.
+
+## Правила прогресса
+
+- Следующий шаг открывается, когда текущий пройден, **сдан на проверку** или возвращён куратором: ручная проверка
+  не блокирует путь. Текущий шаг — первый, где ждут действия ученика; возвращённые работы — когда больше нечего делать.
+- Процент курса — доля зачтённых обязательных шагов. Рейтинг — `sum(score) / sum(max_score) * 100` по обязательным
+  шагам; ручная и автоматическая проверка весят одинаково. `pending_max` — баллы работ, которые сейчас у куратора.
+- Место в группе — по рейтингу среди записанных на курс; серия — дни подряд (МСК), когда ученик что-то сдал или прошёл.
+- Отставание (`/lag/students`): без входа 3+ / 7+ дней; заходит, но 4+ / 10+ дней без продвижения; 3+ неудачные попытки
+  на текущем шаге; возвращённая работа не исправлена 2+ дня; на 30 п. п. ниже медианы группы. `include_ok=true` — все ученики.
+
+## Срезы API (`/api/v1`)
+
+| Срез | Что делает |
+|---|---|
+| `auth` | вход, регистрация ученика, `/me` |
+| `catalog` | курсы с паспортом, запись, оглавление (с `type` шага), следующий шаг |
+| `learning` | шаг глазами ученика, `complete`, `submit`, история работ `GET /submissions`, загрузка скриншота `POST /uploads` |
+| `questions` | вопрос по шагу (ученик), входящие и ответ (куратор) |
+| `reviews` | очередь ручной проверки, принять / вернуть с комментарием |
+| `progress` | прогресс, расшифровка рейтинга, место в группе, серия, `/leaderboard` |
+| `lag` | ученики курсов куратора и сигналы отставания |
+| `admin` | курсы, модули, уроки, шаги, публикация и снятие, кураторы и ученики курса, пользователи, `step-kinds` |
+
+Миграции: `001_initial`, `002_cover`, `003_step_types` (kind → строка, паспорт курса, результат автопроверки,
+вопросы по шагам, `ON DELETE SET NULL` для текущего шага).

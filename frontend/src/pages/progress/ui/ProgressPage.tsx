@@ -3,7 +3,7 @@ import { courseApi, flattenOutline, sortOutline } from '@/entities/course'
 import { StepTypeIcon, resolveStepType } from '@/entities/step'
 import { RatingBreakdown } from '@/widgets/rating-breakdown'
 import { ApiError, type BreakdownItem } from '@/shared/api'
-import { formatDate, formatPercent, formatScore, useAsync } from '@/shared/lib'
+import { formatDate, formatPercent, formatScore, plural, useAsync } from '@/shared/lib'
 import { ButtonLink, Card, EmptyState, ErrorBox, Icon, Loader, PageHeader, ProgressBar, SectionLabel, StatusPill } from '@/shared/ui'
 
 const sourceLabel: Record<BreakdownItem['source'], string> = {
@@ -65,9 +65,32 @@ export function ProgressPage() {
             </div>
             <ProgressBar value={p.percent} className="mt-3" />
             <p className="mt-2 text-sm text-brand-ink-2">
-              Зачтено <span className="num font-semibold text-brand-ink">{p.completed_required_steps}</span> из <span className="num font-semibold text-brand-ink">{p.total_required_steps}</span> обязательных шагов. Теория тоже считается.
+              Зачтено <span className="num font-semibold text-brand-ink">{p.completed_required_steps}</span> из <span className="num font-semibold text-brand-ink">{p.total_required_steps}</span> обязательных шагов. Теория тоже считается. Работа на проверке засчитывается, когда её примет куратор.
             </p>
           </Card>
+
+          {(r.group_size > 1 || p.streak_days > 0) && (
+            <div className="grid grid-cols-2 gap-4">
+              {r.place && r.group_size > 1 && (
+                <Card className="p-5">
+                  <div className="text-sm text-brand-ink-2">Место в группе</div>
+                  <div className="num mt-1 text-3xl font-extrabold">
+                    {r.place}
+                    <span className="text-base font-semibold text-brand-ink-3"> из {r.group_size}</span>
+                  </div>
+                  <div className="mt-1 text-xs text-brand-ink-3">по рейтингу среди учеников курса</div>
+                </Card>
+              )}
+              <Card className="p-5">
+                <div className="text-sm text-brand-ink-2">Серия</div>
+                <div className="num mt-1 text-3xl font-extrabold">
+                  {p.streak_days}
+                  <span className="text-base font-semibold text-brand-ink-3"> {plural(p.streak_days, 'день', 'дня', 'дней')}</span>
+                </div>
+                <div className="mt-1 text-xs text-brand-ink-3">подряд что-то сдаёшь или проходишь</div>
+              </Card>
+            </div>
+          )}
 
           <Card className="p-6">
             <div className="flex items-baseline justify-between">
@@ -82,7 +105,7 @@ export function ProgressPage() {
               <span className="num rounded-md bg-brand-mist px-1.5 py-0.5 font-mono whitespace-nowrap text-brand-ink">
                 {formatScore(r.total_score)} ÷ {formatScore(r.total_max)} × 100
               </span>
-              . Баллы от куратора и от автопроверки считаются одинаково.
+              . Баллы от куратора и от автопроверки считаются одинаково; теория баллов не даёт, но идёт в процент прохождения.
             </p>
           </Card>
 
@@ -92,7 +115,8 @@ export function ProgressPage() {
               <>
                 <div className="mt-1 text-lg font-bold">{currentStep.title}</div>
                 <div className="text-sm text-brand-ink-2">
-                  {currentStep.module.title} · {currentStep.lesson.title}
+                  {currentStep.module.title}
+                  {currentStep.lesson.title !== currentStep.module.title && ` · ${currentStep.lesson.title}`}
                 </div>
                 <ButtonLink to={`/courses/${courseId}/steps/${currentStep.id}`} className="mt-4 w-full">
                   Продолжить
@@ -129,7 +153,7 @@ export function ProgressPage() {
                     {items.map((b) => (
                       <li key={b.step_id}>
                         <Link to={`/courses/${courseId}/steps/${b.step_id}`} className="flex items-center gap-3 rounded-btn px-3 py-2 hover:bg-brand-mist">
-                          <StepTypeIcon type={resolveStepType(b.kind, null, b.step_id)} size="sm" />
+                          <StepTypeIcon type={resolveStepType(b.kind, b.type)} size="sm" />
                           <span className="min-w-0 flex-1">
                             <span className="block truncate font-semibold">{b.title}</span>
                             <span className="text-xs text-brand-ink-3">{b.source === 'manual' ? 'проверил куратор' : 'проверено автоматически'}</span>

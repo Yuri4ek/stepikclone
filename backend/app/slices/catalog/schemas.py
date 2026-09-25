@@ -17,6 +17,8 @@ class CatalogCourseItem(BaseModel):
     title: str
     description: str
     cover_url: str | None = None
+    passport: dict = {}
+    steps_total: int = 0
     status: str
     enrollment: EnrollmentBrief | None
 
@@ -46,6 +48,7 @@ class OutlineStep(BaseModel):
     title: str
     position: int
     kind: str
+    type: str
     max_score: Decimal
     is_required: bool
     progress: StepProgressBrief

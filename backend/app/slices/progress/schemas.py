@@ -15,4 +15,12 @@ class ProgressOut(BaseModel):
     total_required_steps: int
     current_step_id: uuid.UUID | None
     rating: dict
+    streak_days: int = 0
     updated_at: datetime | None = None
+
+
+class LeaderboardOut(BaseModel):
+    course_id: uuid.UUID
+    place: int | None
+    group_size: int
+    items: list[dict]

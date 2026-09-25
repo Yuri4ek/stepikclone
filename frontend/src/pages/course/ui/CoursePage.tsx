@@ -1,5 +1,5 @@
 import { Link, useParams } from 'react-router-dom'
-import { courseApi, flattenOutline, sortOutline } from '@/entities/course'
+import { CoursePassportCard, courseApi, flattenOutline, sortOutline } from '@/entities/course'
 import { useUser } from '@/entities/session'
 import { resolveStepType } from '@/entities/step'
 import { useEnrollCourse } from '@/features/enroll-course'
@@ -87,7 +87,7 @@ export function CoursePage() {
                     <>
                       <div className="mt-1 text-lg font-bold">{current.title}</div>
                       <div className="text-sm text-brand-ink-2">
-                        {resolveStepType(current.kind, null, current.id).label} · шаг {current.index} из {flat.length}
+                        {resolveStepType(current.kind, current.type).label} · шаг {current.index} из {flat.length}
                       </div>
                       <ButtonLink to={`/courses/${courseId}/steps/${current.id}`} className="mt-4 w-full">
                         Продолжить
@@ -96,7 +96,7 @@ export function CoursePage() {
                     </>
                   ) : (
                     <div className="mt-2">
-                      <StatusPill tone="done" label="Курс пройден" />
+                      <StatusPill tone={submitted.length ? 'review' : 'done'} label={submitted.length ? 'Всё сдано, ждём проверку куратора' : 'Курс пройден'} />
                     </div>
                   )}
                 </div>
@@ -122,7 +122,7 @@ export function CoursePage() {
                 <Notice tone="review">
                   <StatusPill tone="review" />
                   <p className="mt-2">
-                    <span className="num">{submitted.length}</span> {plural(submitted.length, 'работа ждёт', 'работы ждут', 'работ ждут')} куратора. Результат появится на шаге.
+                    <span className="num">{submitted.length}</span> {plural(submitted.length, 'работа ждёт', 'работы ждут', 'работ ждут')} куратора. Результат появится на шаге, а пока можно идти дальше.
                   </p>
                 </Notice>
               )}
@@ -145,6 +145,7 @@ export function CoursePage() {
           ) : (
             <Notice>Вы смотрите программу курса. Проходить шаги могут ученики.</Notice>
           )}
+          <CoursePassportCard passport={outline.course.passport} />
         </aside>
       </div>
     </>

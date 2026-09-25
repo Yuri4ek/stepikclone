@@ -1,14 +1,13 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { courseApi, flattenOutline, sortOutline } from '@/entities/course'
-import { useUser } from '@/entities/session'
-import { StatusBadge, StepTypeBadge, checkLabels, resolveStepType, stepApi, type StepTypeDef } from '@/entities/step'
-import { logSubmission } from '@/entities/submission'
+import { CheckReport, StatusBadge, StepTypeBadge, checkLabels, resolveStepType, stepApi, type StepTypeDef } from '@/entities/step'
+import { StepQuestions } from '@/features/ask-question'
 import { answerApi } from '@/features/step-answer'
 import { CourseMap } from '@/widgets/course-outline'
-import { ApiError, type Answers, type LearningStep, type SubmitResult } from '@/shared/api'
+import { ApiError, type Answers, type CheckResult, type LearningStep, type SubmitResult } from '@/shared/api'
 import { formatScore, plural, useAsync } from '@/shared/lib'
-import { Button, Card, ErrorBox, Icon, Loader, Notice, ProgressBar, ScorePill, StatusPill } from '@/shared/ui'
+import { Button, ButtonLink, Card, ErrorBox, Icon, Loader, Notice, ProgressBar, ScorePill, StatusPill } from '@/shared/ui'
 
 type LastResult = { kind: 'submit'; data: SubmitResult } | { kind: 'complete' }
 
@@ -32,33 +31,71 @@ function Comment({ text }: { text: string }) {
   )
 }
 
-/** Результат проверки. Тон — как тренер после тренировки: что получилось, что поправить, куда дальше */
-function ResultBanner({ step, type, last }: { step: LearningStep; type: StepTypeDef; last: LastResult | null }) {
-  const status = step.progress.status
-  const fb = step.progress.feedback
-
-  if (last?.kind === 'submit' && last.data.check_type === 'auto') {
-    const ok = last.data.step_status === 'passed'
-    return ok ? (
-      <Notice tone="success" className="flex flex-wrap items-center justify-between gap-3">
-        <span className="flex items-center gap-3">
-          <StatusPill tone="done" />
-          <span className="font-semibold">Верно! Баллы уже в твоём прогрессе.</span>
-        </span>
-        <Points score={last.data.score} max={last.data.max_score} />
-      </Notice>
-    ) : (
-      <Notice tone="error">
-        <StatusPill tone="failed" label="Не прошло проверку" />
-        <p className="mt-2">Пока не совпало с ответом. Перечитай условие и попробуй ещё раз — результат будет сразу.</p>
+/** Результат автопроверки: ответ или прогон по тестам. Берётся из последней отправки — виден и после перезагрузки */
+function AutoResult({ passed, feedback, result, score, max, type, nextId, courseId }: { passed: boolean; feedback: string | null; result: CheckResult | null | undefined; score: number | null; max: number; type: StepTypeDef; nextId?: string | null; courseId: string }) {
+  const tests = type.check === 'tests'
+  // «Верно» — служебный ответ сервера; показываем только содержательные пояснения и подсказки
+  const note = feedback && feedback !== 'Верно' && !(tests && result) ? feedback : null
+  if (passed) {
+    return (
+      <Notice tone="success">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <span className="flex items-center gap-3">
+            <StatusPill tone="done" checkedBy="auto" />
+            <span className="font-semibold">{tests ? 'Все тесты пройдены!' : 'Верно!'} Баллы уже в твоём прогрессе.</span>
+          </span>
+          {max > 0 && <Points score={score} max={max} />}
+        </div>
+        {note && <p className="mt-3">{note}</p>}
+        {result && tests && (
+          <div className="mt-3">
+            <CheckReport result={result} compact />
+          </div>
+        )}
+        {nextId && (
+          <ButtonLink to={`/courses/${courseId}/steps/${nextId}`} className="mt-4">
+            Следующий шаг
+            <Icon name="arrowRight" size={18} />
+          </ButtonLink>
+        )}
       </Notice>
     )
+  }
+  return (
+    <Notice tone="error">
+      <StatusPill tone="failed" label={tests ? undefined : 'Не прошло проверку'} />
+      {tests && result ? (
+        <div className="mt-3">
+          <CheckReport result={result} />
+        </div>
+      ) : (
+        <p className="mt-2">{note ?? 'Пока не совпало с ответом.'} Попробуй ещё раз — результат будет сразу.</p>
+      )}
+    </Notice>
+  )
+}
+
+/** Результат проверки. Тон — как тренер после тренировки: что получилось, что поправить, куда дальше */
+function ResultBanner({ step, type, last, nextId, courseId }: { step: LearningStep; type: StepTypeDef; last: LastResult | null; nextId?: string | null; courseId: string }) {
+  const status = step.progress.status
+  const fb = step.progress.feedback
+  const lastSub = step.progress.last_submission
+
+  if (last?.kind === 'submit' && last.data.check_type === 'auto') {
+    const d = last.data
+    return <AutoResult passed={d.step_status === 'passed'} feedback={d.feedback} result={d.result} score={d.score} max={d.max_score} type={type} nextId={d.next_step_id} courseId={courseId} />
   }
   if (status === 'submitted') {
     return (
       <Notice tone="review">
         <StatusPill tone="review" />
-        <p className="mt-2">Отправлено куратору. Результат и комментарий появятся здесь, а следующий шаг откроется, когда работу примут.</p>
+        <p className="mt-2">Работа у куратора. Результат и комментарий появятся здесь, а пока можно идти дальше.</p>
+        {nextId && (
+          <ButtonLink to={`/courses/${courseId}/steps/${nextId}`} className="mt-4">
+            Следующий шаг
+            <Icon name="arrowRight" size={18} />
+          </ButtonLink>
+        )}
       </Notice>
     )
   }
@@ -71,14 +108,17 @@ function ResultBanner({ step, type, last }: { step: LearningStep; type: StepType
       </Notice>
     )
   }
+  if (status === 'failed' && lastSub?.check_type === 'auto') {
+    return <AutoResult passed={false} feedback={lastSub.feedback} result={lastSub.result} score={lastSub.score} max={step.max_score} type={type} courseId={courseId} />
+  }
   if (status === 'passed' && type.check !== 'none') {
     return (
       <Notice tone="success">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <StatusBadge status="passed" checkedBy={type.check === 'auto' ? 'auto' : 'manual'} />
-          {step.max_score > 0 && <Points score={step.progress.score} max={step.max_score} />}
+          <StatusBadge status="passed" checkedBy={type.check === 'manual' ? 'manual' : 'auto'} />
+          {step.max_score > 0 && <Points score={step.progress.best_score ?? step.progress.score} max={step.max_score} />}
         </div>
-        {fb && type.check !== 'auto' && <Comment text={fb} />}
+        {fb && type.check === 'manual' && <Comment text={fb} />}
       </Notice>
     )
   }
@@ -88,7 +128,6 @@ function ResultBanner({ step, type, last }: { step: LearningStep; type: StepType
 export function StepPage() {
   const { courseId = '', stepId = '' } = useParams()
   const navigate = useNavigate()
-  const user = useUser()
   const outline = useAsync(() => courseApi.outline(courseId).then(sortOutline), [courseId])
   const step = useAsync(() => stepApi.get(stepId), [stepId])
   const progress = useAsync(() => courseApi.next(courseId), [courseId])
@@ -123,33 +162,35 @@ export function StepPage() {
     }
   }
 
-  const submit = (answers: Answers) =>
-    act(async () => {
-      const data = await answerApi.submit(stepId, answers)
-      logSubmission(user.id, {
-        submission_id: data.submission_id,
-        step_id: stepId,
-        step_title: step.data?.title ?? '',
-        step_type: step.data ? resolveStepType(step.data.kind, step.data.content).id : '',
-        course_id: courseId,
-        course_title: outline.data?.course.title ?? '',
-        created_at: new Date().toISOString(),
-      })
-      return { kind: 'submit', data }
-    })
+  const submit = (answers: Answers) => act(async () => ({ kind: 'submit', data: await answerApi.submit(stepId, answers) }))
 
-  const complete = () =>
-    act(async () => {
-      await answerApi.complete(stepId)
-      return { kind: 'complete' }
-    })
+  // «Готово, идём дальше»: теория засчитана — сразу открываем следующий шаг
+  const complete = async () => {
+    setBusy(true)
+    setLastState(null)
+    try {
+      const res = await answerApi.complete(stepId)
+      if (res.next_step_id) {
+        await outline.reload()
+        navigate(`/courses/${courseId}/steps/${res.next_step_id}`)
+      } else {
+        setLastState({ stepId, result: { kind: 'complete' } })
+        await Promise.all([step.reload(), outline.reload(), progress.reload()])
+      }
+    } catch (e) {
+      setLastState({ stepId, error: e as Error })
+    } finally {
+      setBusy(false)
+    }
+  }
 
   if (outline.error) return <ErrorBox error={outline.error} onRetry={outline.reload} />
 
   const s = step.data
-  const type = s ? resolveStepType(s.kind, s.content, s.id) : null
+  const type = s ? resolveStepType(s.kind, s.type) : null
   const st = s?.progress.status
-  const canSubmit = !!s && !!type && st !== 'submitted' && st !== 'locked' && !(st === 'passed' && type.check !== 'auto')
+  // Автопроверку можно пройти ещё раз (баллы — лучшая попытка); зачтённую куратором работу — нет
+  const canSubmit = !!s && !!type && st !== 'submitted' && st !== 'locked' && !(st === 'passed' && type.check === 'manual')
   const coursePercent = progress.data?.percent ?? 0
   const nextLocked = next?.progress.status === 'locked'
 
@@ -163,7 +204,8 @@ export function StepPage() {
           </Link>
           {current && (
             <div className="mt-1 font-semibold text-brand-ink-2">
-              {current.module.title} · {current.lesson.title}
+              {current.module.title}
+              {current.lesson.title !== current.module.title && ` · ${current.lesson.title}`}
             </div>
           )}
         </div>
@@ -188,7 +230,7 @@ export function StepPage() {
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
               <StepTypeBadge type={type} />
               <span className="eyebrow text-brand-ink-3">{checkLabels[type.check]}</span>
-              {st && <StatusBadge status={st} />}
+              {st && (st === 'failed' && type.check !== 'tests' ? <StatusPill tone="failed" label="Не прошло проверку" /> : <StatusBadge status={st} />)}
               {s.max_score > 0 && <ScorePill className="ml-auto">до {formatScore(s.max_score)} баллов</ScorePill>}
             </div>
             <h1 className="mt-4 text-[32px] leading-[1.1] font-extrabold tracking-tight sm:text-[36px]">{s.title}</h1>
@@ -199,12 +241,14 @@ export function StepPage() {
             )}
           </div>
           <div className="space-y-6 px-5 py-6 sm:px-8">
-            <ResultBanner step={s} type={type} last={last} />
+            <ResultBanner step={s} type={type} last={last} nextId={nextLocked ? null : next?.id} courseId={courseId} />
             {actionError && <ErrorBox error={actionError} />}
             <type.Player key={s.id} step={s} content={s.content} busy={busy} canSubmit={canSubmit} submit={submit} complete={complete} />
           </div>
         </Card>
       )}
+
+      {s && <StepQuestions stepId={s.id} />}
 
       <div className="flex items-center justify-between gap-3">
         {prev ? (
@@ -216,7 +260,7 @@ export function StepPage() {
           <span />
         )}
         {next ? (
-          <Button onClick={() => navigate(`/courses/${courseId}/steps/${next.id}`)} disabled={nextLocked} title={nextLocked ? 'Откроется, когда этот шаг будет зачтён' : undefined}>
+          <Button onClick={() => navigate(`/courses/${courseId}/steps/${next.id}`)} disabled={nextLocked} title={nextLocked ? 'Откроется, когда ты выполнишь этот шаг' : undefined}>
             {nextLocked && <Icon name="lock" size={18} />}
             {nextLocked ? 'Шаг закрыт' : 'Следующий шаг'}
             {!nextLocked && <Icon name="arrowRight" size={18} />}

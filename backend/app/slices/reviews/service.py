@@ -14,6 +14,7 @@ from app.models.submission import CheckType, Submission, SubmissionStatus
 from app.models.user import User, UserRole
 from app.slices.progress import service as progress_service
 from app.slices.reviews.schemas import AcceptIn, QueueListOut, ReturnIn, ReviewActionOut
+from app.steps import registry
 
 
 def _curator_course_ids(db: Session, user: User) -> list[uuid.UUID] | None:
@@ -61,9 +62,8 @@ def list_queue(
     page = rows[offset : offset + limit]
     items = []
     for sub, step, student, course in page:
-        text = ""
-        if isinstance(sub.payload, dict):
-            text = str(sub.payload.get("text") or "")[:200]
+        payload = sub.payload if isinstance(sub.payload, dict) else {}
+        text = str(payload.get("text") or payload.get("link") or "")[:200]
         items.append(
             {
                 "submission_id": sub.id,
@@ -71,6 +71,8 @@ def list_queue(
                 "course_title": course.title,
                 "step_id": step.id,
                 "step_title": step.title,
+                "step_type": registry.step_type(step.kind, step.content),
+                "has_screenshot": bool(payload.get("screenshot_url")),
                 "student": {"id": student.id, "full_name": student.full_name, "email": student.email},
                 "submitted_at": sub.created_at.isoformat() if sub.created_at else None,
                 "preview": text,
@@ -98,12 +100,27 @@ def get_submission(db: Session, user: User, submission_id: uuid.UUID) -> dict:
         "step": {
             "id": step.id,
             "title": step.title,
+            "kind": step.kind,
+            "type": registry.step_type(step.kind, step.content),
             "max_score": step.max_score,
             "content": step.content,
         },
+        "course_id": course_id,
+        "attempt": _attempt_number(db, sub),
         "student": {"id": student.id, "full_name": student.full_name} if student else None,
         "created_at": sub.created_at.isoformat() if sub.created_at else None,
     }
+
+
+def _attempt_number(db: Session, sub: Submission) -> int:
+    earlier = db.scalars(
+        select(Submission.id).where(
+            Submission.user_id == sub.user_id,
+            Submission.step_id == sub.step_id,
+            Submission.created_at <= sub.created_at,
+        )
+    ).all()
+    return len(earlier)
 
 
 def accept(db: Session, user: User, submission_id: uuid.UUID, data: AcceptIn) -> ReviewActionOut:

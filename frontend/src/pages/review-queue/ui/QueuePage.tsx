@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { LagBadge, lagApi } from '@/entities/lag'
 import { useUser } from '@/entities/session'
+import { StepTypeIcon, resolveStepType } from '@/entities/step'
 import { QueueTable, submissionApi } from '@/entities/submission'
 import { CourseFilter } from '@/features/filter-by-course'
 import { useAsync } from '@/shared/lib'
@@ -13,7 +14,8 @@ export function QueuePage() {
   const [courseId, setCourseId] = useState('')
   const [offset, setOffset] = useState(0)
   const { data, error, loading, reload } = useAsync(() => submissionApi.queue({ course_id: courseId || undefined, limit: LIMIT, offset }), [courseId, offset])
-  // Уровень отставания рядом с именем: куратор сразу видит, чью работу проверить в первую очередь
+  // Уровень отставания рядом с именем: куратор сразу видит, чью работу проверить в первую очередь.
+  // В очереди только ручная проверка, поэтому тип шага ищем среди kind=task
   const lag = useAsync(() => lagApi.students({ limit: 100 }), [])
   const lagMap = new Map((lag.data?.items ?? []).map((i) => [`${i.student.id}:${i.course_id}`, i.lag_level]))
 
@@ -42,7 +44,7 @@ export function QueuePage() {
           </EmptyState>
         ) : (
           <Card className="overflow-hidden">
-            <QueueTable items={data.items} studentMeta={(it) => (lag.data ? <LagBadge level={lagMap.get(`${it.student.id}:${it.course_id}`) ?? 'ok'} /> : null)} />
+            <QueueTable stepIcon={(it) => <StepTypeIcon type={resolveStepType('task', it.step_type)} size="sm" />} items={data.items} studentMeta={(it) => (lag.data ? <LagBadge level={lagMap.get(`${it.student.id}:${it.course_id}`) ?? 'ok'} /> : null)} />
           </Card>
         ))}
       {data && <Pager total={data.total} limit={LIMIT} offset={offset} onChange={setOffset} />}

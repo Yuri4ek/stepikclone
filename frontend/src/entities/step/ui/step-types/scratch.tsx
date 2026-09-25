@@ -1,13 +1,10 @@
 import { Field, Icon, Input, Markdown } from '@/shared/ui'
-import { str } from '../../lib/content'
-import { Criteria, CriteriaField, DefaultReviewView, ManualSubmitForm, MarkdownField } from '../common'
-import type { StepTypeDef } from '../../model/types'
+import { scratchProjectId, str, submitConfig, validateAnswerKey, type SubmitConfig } from '../../lib/content'
+import { BLOCKS_HINT, CriteriaField, DefaultReviewView, ManualSubmitForm, MarkdownField, SubmitConfigField } from '../common'
+import { AnswerForm, AnswerKeyFields } from './answer'
+import type { EditorProps, StepTypeDef } from '../../model/types'
 
-export function scratchProjectId(url: string): string | null {
-  return url.match(/scratch\.mit\.edu\/projects\/(\d+)/)?.[1] ?? null
-}
-
-function ScratchEmbed({ url, title }: { url: string; title: string }) {
+export function ScratchEmbed({ url, title }: { url: string; title: string }) {
   const id = scratchProjectId(url)
   if (!id) return null
   return (
@@ -26,42 +23,51 @@ function ScratchEmbed({ url, title }: { url: string; title: string }) {
   )
 }
 
+function ProjectUrlField({ content, onChange }: EditorProps) {
+  return (
+    <Field label="Проект-пример в Scratch (необязательно)" hint="Ссылка вида https://scratch.mit.edu/projects/123456 — встроится в шаг">
+      <Input value={str(content, 'project_url')} onChange={(e) => onChange({ ...content, project_url: e.target.value })} placeholder="https://scratch.mit.edu/projects/…" />
+    </Field>
+  )
+}
+
+const SCRATCH_SUBMIT: SubmitConfig = { link: 'required', screenshot: 'off', text: 'optional' }
+
+/** Scratch: разбор блочной программы, ученик сдаёт изменённый проект ссылкой — проверяет куратор */
 export const scratchStep: StepTypeDef = {
   id: 'scratch',
   kind: 'task',
-  label: 'Scratch',
-  description: 'Разбор блочной конструкции, ученик показывает результат ссылкой на свой проект.',
+  label: 'Scratch: проект по ссылке',
+  description: 'Разбор блочной программы; ученик меняет проект и сдаёт ссылку. Проверяет куратор.',
+  group: 'Scratch',
   icon: 'blocks',
   check: 'manual',
-  defaultMaxScore: 20,
-  defaultContent: () => ({ type: 'scratch', markdown: '', project_url: '', criteria: '' }),
+  defaultMaxScore: 10,
+  defaultContent: () => ({ type: 'scratch', markdown: '', project_url: '', criteria: '', submit: SCRATCH_SUBMIT }),
   validate: (c) => (str(c, 'markdown').trim() ? null : 'Опишите задание'),
 
   Editor: ({ content, onChange }) => (
     <div className="space-y-4">
-      <MarkdownField label="Задание" rows={8} value={str(content, 'markdown')} onChange={(markdown) => onChange({ ...content, markdown })} hint="Что нужно разобрать в блочной программе и что показать" />
-      <Field label="Проект-пример для разбора" hint="Ссылка вида https://scratch.mit.edu/projects/123456 — встроится в шаг">
-        <Input value={str(content, 'project_url')} onChange={(e) => onChange({ ...content, project_url: e.target.value })} placeholder="https://scratch.mit.edu/projects/…" />
-      </Field>
+      <MarkdownField label="Задание" rows={12} value={str(content, 'markdown')} onChange={(markdown) => onChange({ ...content, markdown })} hint={BLOCKS_HINT} />
+      <ProjectUrlField content={content} onChange={onChange} />
+      <SubmitConfigField content={content} onChange={onChange} defaults={SCRATCH_SUBMIT} linkKind={false} />
       <CriteriaField content={content} onChange={onChange} />
     </div>
   ),
 
   Player: ({ step, content, busy, canSubmit, submit }) => (
-    <div className="space-y-5">
+    <div className="space-y-6">
       <Markdown>{str(content, 'markdown')}</Markdown>
       <ScratchEmbed url={str(content, 'project_url')} title="Проект для разбора" />
-      <Criteria content={content} />
       <ManualSubmitForm
         stepId={step.id}
         busy={busy}
         canSubmit={canSubmit}
         submit={submit}
-        linkLabel="Ссылка на твой проект в Scratch"
-        linkPlaceholder="https://scratch.mit.edu/projects/…"
-        linkRequired
-        textLabel="Объясни, как работает твоя программа"
-        textPlaceholder="Какие блоки использовали и что происходит, когда нажимаешь на флажок"
+        config={submitConfig(content, SCRATCH_SUBMIT)}
+        linkKind="scratch"
+        textLabel="Объясни, что ты изменил"
+        textPlaceholder="Какие блоки поменял и что теперь происходит, когда нажимаешь на флажок"
       />
     </div>
   ),
@@ -71,5 +77,39 @@ export const scratchStep: StepTypeDef = {
       <ScratchEmbed url={str(payload, 'link')} title="Проект ученика" />
       <DefaultReviewView payload={payload} />
     </div>
+  ),
+}
+
+/** Scratch: разбор блочной программы с ответом числом — проверяется автоматически */
+export const scratchAnswerStep: StepTypeDef = {
+  id: 'scratch_answer',
+  kind: 'quiz',
+  label: 'Scratch: разбор с ответом',
+  description: 'Ученик разбирает блочную программу и отвечает числом. Результат — сразу.',
+  group: 'Scratch',
+  icon: 'blocks',
+  check: 'auto',
+  defaultMaxScore: 5,
+  defaultContent: () => ({ type: 'scratch_answer', markdown: '', question: '', correct_answer: '', answer_kind: 'number' }),
+  validate: (c) => (!str(c, 'markdown').trim() ? 'Добавьте программу для разбора' : !str(c, 'question').trim() ? 'Введите вопрос' : validateAnswerKey(c)),
+
+  Editor: ({ content, onChange }) => (
+    <div className="space-y-4">
+      <MarkdownField label="Программа и пояснение" rows={10} value={str(content, 'markdown')} onChange={(markdown) => onChange({ ...content, markdown })} hint={BLOCKS_HINT} />
+      <ProjectUrlField content={content} onChange={onChange} />
+      <MarkdownField label="Вопрос" rows={2} value={str(content, 'question')} onChange={(question) => onChange({ ...content, question })} />
+      <AnswerKeyFields content={content} onChange={onChange} />
+    </div>
+  ),
+
+  Player: (props) => (
+    <AnswerForm {...props}>
+      <Markdown>{str(props.content, 'markdown')}</Markdown>
+      <ScratchEmbed url={str(props.content, 'project_url')} title="Проект для разбора" />
+      <div className="rounded-card border border-brand-blue-200 bg-brand-blue-50 p-5">
+        <div className="eyebrow mb-1 text-brand-blue">Вопрос</div>
+        <Markdown>{str(props.content, 'question')}</Markdown>
+      </div>
+    </AnswerForm>
   ),
 }

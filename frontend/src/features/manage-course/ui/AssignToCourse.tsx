@@ -4,8 +4,8 @@ import { useAsync } from '@/shared/lib'
 import { Button, Icon, Select } from '@/shared/ui'
 import { manageCourseApi } from '../api/manageCourseApi'
 
-/** Назначить куратора на курс — из списка пользователей */
-export function AssignToCourse({ curatorId }: { curatorId: string }) {
+/** Назначить куратора на курс или записать ученика — из списка пользователей */
+export function AssignToCourse({ userId, role, exclude = [], onDone }: { userId: string; role: 'curator' | 'student'; exclude?: string[]; onDone?: () => void }) {
   const courses = useAsync(() => courseApi.adminList(), [])
   const [courseId, setCourseId] = useState('')
   const [busy, setBusy] = useState(false)
@@ -20,9 +20,11 @@ export function AssignToCourse({ curatorId }: { curatorId: string }) {
         setBusy(true)
         setError(null)
         try {
-          await manageCourseApi.assignCurator(courseId, curatorId)
+          if (role === 'curator') await manageCourseApi.assignCurator(courseId, userId)
+          else await manageCourseApi.enrollStudent(courseId, userId)
           setDone(courses.data?.find((c) => c.id === courseId)?.title ?? 'курс')
           setCourseId('')
+          onDone?.()
         } catch (err) {
           setError((err as Error).message)
         } finally {
@@ -32,19 +34,19 @@ export function AssignToCourse({ curatorId }: { curatorId: string }) {
     >
       <Select required value={courseId} onChange={(e) => setCourseId(e.target.value)} className="w-56 py-1.5" aria-label="Курс">
         <option value="">{courses.loading ? 'Загрузка…' : 'Выберите курс'}</option>
-        {courses.data?.map((c) => (
+        {courses.data?.filter((c) => !exclude.includes(c.id)).map((c) => (
           <option key={c.id} value={c.id}>
             {c.title}
           </option>
         ))}
       </Select>
       <Button type="submit" size="sm" variant="secondary" loading={busy} disabled={!courseId}>
-        Назначить
+        {role === 'curator' ? 'Назначить' : 'Записать'}
       </Button>
       {done && (
         <span className="inline-flex items-center gap-1 text-xs font-semibold text-st-done">
           <Icon name="check" size={14} strokeWidth={2.4} />
-          Назначен на «{done}»
+          {role === 'curator' ? 'Назначен' : 'Записан'} на «{done}»
         </span>
       )}
       {error && <span className="text-xs text-brand-amber-text">{error}</span>}

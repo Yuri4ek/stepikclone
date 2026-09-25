@@ -15,6 +15,7 @@ _COVER_FILES: dict[str, str] = {
     "python-first-steps": "cover-table.jpg",
     "codeolymp-start": "cover-edu.png",
     "algo-intro": "cover-table.jpg",
+    "minecraft-agent": "cover-edu.png",
 }
 
 

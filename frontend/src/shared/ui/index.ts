@@ -1,4 +1,5 @@
 export { Badge, Dot, ProgressBar, ScorePill, SegmentBar } from './badges'
+export { BlockProgram } from './BlockProgram'
 export { Button, ButtonLink } from './Button'
 export { Spinner, Loader, ErrorBox, Notice } from './feedback'
 export { Field, Input, Textarea, Select, Segmented } from './form'

@@ -1,13 +1,15 @@
 import { Link } from 'react-router-dom'
 import { LagBadge, lagApi, lagSentence } from '@/entities/lag'
+import { questionApi } from '@/entities/question'
 import { useUser } from '@/entities/session'
+import { StepTypeIcon, resolveStepType } from '@/entities/step'
 import { QueueTable, submissionApi } from '@/entities/submission'
 import { cx, formatPercent, hoursSince, useAsync } from '@/shared/lib'
 import { ButtonLink, Card, EmptyState, ErrorBox, Icon, Loader, PageHeader, SectionLabel, type IconName } from '@/shared/ui'
 
 async function load() {
-  const [queue, lag] = await Promise.all([submissionApi.queue({ limit: 100 }), lagApi.students({ limit: 100 })])
-  return { queue, lag }
+  const [queue, lag, questions] = await Promise.all([submissionApi.queue({ limit: 100 }), lagApi.students({ limit: 100 }), questionApi.inbox({ status: 'open' })])
+  return { queue, lag, questions }
 }
 
 /** Ключ «ученик + курс» — чтобы показать уровень отставания рядом с работой в очереди */
@@ -46,11 +48,12 @@ export function OverviewPage() {
     <>
       <PageHeader title={`Здравствуйте, ${user.full_name.split(' ')[0]}`} subtitle="Работы на проверку и ученики, которым сейчас нужно внимание" />
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <Stat label="Ждут проверки" value={data.queue.total} to="/curator/queue" hint="в очереди ручной проверки" icon="inbox" />
         <Stat label="Ждут больше суток" value={overdue} to="/curator/queue" hint="стоит проверить первыми" icon="clock" attention />
-        <Stat label="Выпадают" value={critical.length} to="/curator/lag" hint="7+ дней без входа" icon="alert" attention />
-        <Stat label="Замедлились" value={warning.length} to="/curator/lag" hint="3+ дня без входа или прогресс ниже 20 %" icon="users" attention />
+        <Stat label="Вопросы без ответа" value={data.questions.open} to="/curator/questions" hint="ученики спрашивают по шагам" icon="message" attention />
+        <Stat label="Выпадают" value={critical.length} to="/curator/lag" hint="давно не заходят или не продвигаются" icon="alert" attention />
+        <Stat label="Замедлились" value={warning.length} to="/curator/lag" hint="ранние сигналы: застрял, не продвигается" icon="users" attention />
       </div>
 
       <div className="mt-8 grid gap-6 xl:grid-cols-[1.5fr_1fr]">
@@ -64,7 +67,7 @@ export function OverviewPage() {
           </div>
           {data.queue.items.length ? (
             <Card className="overflow-hidden">
-              <QueueTable items={data.queue.items.slice(0, 5)} studentMeta={(it) => <LagBadge level={lagMap.get(lagKey(it.student.id, it.course_id)) ?? 'ok'} />} />
+              <QueueTable stepIcon={(it) => <StepTypeIcon type={resolveStepType('task', it.step_type)} size="sm" />} items={data.queue.items.slice(0, 5)} studentMeta={(it) => <LagBadge level={lagMap.get(lagKey(it.student.id, it.course_id)) ?? 'ok'} />} />
             </Card>
           ) : (
             <EmptyState icon="check" title="Очередь пуста. Все работы проверены." />

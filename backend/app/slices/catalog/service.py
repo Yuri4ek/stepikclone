@@ -5,10 +5,10 @@ from datetime import datetime
 from decimal import Decimal
 
 from fastapi import HTTPException, status
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session, joinedload
 
-from app.models.course import Course, CourseStatus, Lesson, Module
+from app.models.course import Course, CourseStatus, Lesson, Module, Step
 from app.models.progress import Enrollment, EnrollmentStatus, StepProgress, StepProgressStatus
 from app.models.user import User, UserRole
 from app.slices.catalog.schemas import (
@@ -24,17 +24,29 @@ from app.slices.catalog.schemas import (
     StepProgressBrief,
 )
 from app.slices.progress import service as progress_service
+from app.steps import registry
 
 
 def list_courses(db: Session, user: User, limit: int, offset: int) -> CatalogListOut:
-    q = select(Course).where(Course.status == CourseStatus.published).order_by(Course.title)
-    total = db.scalar(select(func.count()).select_from(Course).where(Course.status == CourseStatus.published)) or 0
-    courses = db.scalars(q.limit(limit).offset(offset)).all()
-
     enrollments = {
         e.course_id: e
         for e in db.scalars(select(Enrollment).where(Enrollment.user_id == user.id)).all()
     }
+    # Снятый с публикации курс остаётся у тех, кто уже на нём учится
+    visible = or_(Course.status == CourseStatus.published, Course.id.in_(list(enrollments)))
+    q = select(Course).where(visible).order_by(Course.created_at, Course.title)
+    total = db.scalar(select(func.count()).select_from(Course).where(visible)) or 0
+    courses = db.scalars(q.limit(limit).offset(offset)).all()
+
+    counts = dict(
+        db.execute(
+            select(Module.course_id, func.count(Step.id))
+            .join(Lesson, Lesson.module_id == Module.id)
+            .join(Step, Step.lesson_id == Lesson.id)
+            .where(Module.course_id.in_([c.id for c in courses]))
+            .group_by(Module.course_id)
+        ).all()
+    )
     items: list[CatalogCourseItem] = []
     for c in courses:
         enr = enrollments.get(c.id)
@@ -56,6 +68,8 @@ def list_courses(db: Session, user: User, limit: int, offset: int) -> CatalogLis
                 title=c.title,
                 description=c.description,
                 cover_url=c.cover_url,
+                passport=c.passport or {},
+                steps_total=counts.get(c.id, 0),
                 status=c.status.value,
                 enrollment=brief,
             )
@@ -97,10 +111,9 @@ def outline(db: Session, user: User, course_id: uuid.UUID) -> OutlineOut:
     ).unique().first()
     if course is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Course not found")
-    if course.status != CourseStatus.published and user.role == UserRole.student:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Course not found")
-
     enrollment = progress_service.get_enrollment(db, user.id, course_id)
+    if course.status != CourseStatus.published and user.role == UserRole.student and enrollment is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Course not found")
     progress_map: dict[uuid.UUID, StepProgress] = {}
     if enrollment:
         progress_service.ensure_step_progress_rows(db, user.id, course_id)
@@ -122,7 +135,8 @@ def outline(db: Session, user: User, course_id: uuid.UUID) -> OutlineOut:
                         id=s.id,
                         title=s.title,
                         position=s.position,
-                        kind=s.kind.value,
+                        kind=s.kind,
+                        type=registry.step_type(s.kind, s.content),
                         max_score=s.max_score,
                         is_required=s.is_required,
                         progress=StepProgressBrief(
@@ -147,17 +161,26 @@ def outline(db: Session, user: User, course_id: uuid.UUID) -> OutlineOut:
             "status": course.status.value,
             "cover_url": course.cover_url,
             "description": course.description,
+            "passport": course.passport or {},
         },
         modules=modules_out,
     )
 
 
 _HINTS = {
-    "theory": "Прочитайте материал и отметьте шаг выполненным",
-    "quiz": "Пройдите квиз и отправьте ответы",
-    "task": "Отправьте решение на проверку куратору",
-    "code": "Отправьте решение на автопроверку",
+    "theory": "Прочитай материал и нажми «Готово»",
+    "quiz": "Ответь — результат будет сразу",
+    "code": "Напиши решение — тесты проверят его сразу",
+    "task": "Сдай работу куратору. Дальше можно идти, не дожидаясь проверки",
 }
+_STATUS_HINTS = {
+    "failed": "Прошлая попытка не прошла — попробуй ещё раз",
+    "returned": "Куратор вернул работу — поправь и отправь снова",
+}
+
+
+def _hint(kind: str, step_status: str) -> str:
+    return _STATUS_HINTS.get(step_status) or _HINTS.get(kind, "Продолжай обучение")
 
 
 def next_step(db: Session, user: User, course_id: uuid.UUID) -> NextStepOut:
@@ -167,31 +190,39 @@ def next_step(db: Session, user: User, course_id: uuid.UUID) -> NextStepOut:
     cp = progress_service.recalculate(db, enrollment)
     db.commit()
 
-    if cp.current_step_id is None:
-        return NextStepOut(course_id=course_id, percent=cp.percent, current_step=None, message="Курс пройден")
-
-    from app.models.course import Step
-
-    step = db.get(Step, cp.current_step_id)
+    step = db.get(Step, cp.current_step_id) if cp.current_step_id else None
     if step is None:
-        return NextStepOut(course_id=course_id, percent=cp.percent, current_step=None, message="Курс пройден")
+        waiting = db.scalar(
+            select(func.count())
+            .select_from(StepProgress)
+            .where(
+                StepProgress.user_id == user.id,
+                StepProgress.status == StepProgressStatus.submitted,
+                StepProgress.step_id.in_([s.id for s in progress_service.ordered_steps(db, course_id)]),
+            )
+        )
+        message = "Все шаги сданы, ждём проверку куратора" if waiting else "Курс пройден"
+        return NextStepOut(course_id=course_id, percent=cp.percent, current_step=None, message=message)
 
     sp = db.scalars(
         select(StepProgress).where(StepProgress.user_id == user.id, StepProgress.step_id == step.id)
     ).first()
     lesson = db.get(Lesson, step.lesson_id)
     module = db.get(Module, lesson.module_id) if lesson else None
+    step_status = sp.status.value if sp else "available"
     return NextStepOut(
         course_id=course_id,
         percent=cp.percent,
         current_step={
             "id": step.id,
             "title": step.title,
-            "kind": step.kind.value,
+            "kind": step.kind,
+            "type": registry.step_type(step.kind, step.content),
             "lesson_id": step.lesson_id,
             "module_id": module.id if module else None,
-            "status": sp.status.value if sp else "available",
-            "action_hint": _HINTS.get(step.kind.value, "Продолжайте обучение"),
+            "module_title": module.title if module else None,
+            "status": step_status,
+            "action_hint": _hint(step.kind, step_status),
         },
         message=f"Следующий шаг: {step.title}",
     )

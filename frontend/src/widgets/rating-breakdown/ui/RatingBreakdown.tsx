@@ -17,7 +17,8 @@ export function RatingBreakdown({ progress, steps, className }: { progress: Cour
   // Максимум курса берём у бэкенда: сумма max_score по обязательным шагам (формула rating)
   const courseMax = r.total_max
   const earned = new Set(r.breakdown.map((b) => b.step_id))
-  const nextScored = steps.find((s) => s.max_score > 0 && !earned.has(s.id) && s.progress.status !== 'submitted')
+  const nextScored = steps.find((s) => s.max_score > 0 && !earned.has(s.id) && s.progress.status !== 'submitted' && s.progress.status !== 'locked') ?? steps.find((s) => s.max_score > 0 && !earned.has(s.id) && s.progress.status !== 'submitted')
+  const pending = r.pending_max ?? 0
 
   const rows = [
     { label: 'Задания с автопроверкой', count: auto.length, pts: autoPts, dot: 'bg-brand-blue' },
@@ -40,6 +41,7 @@ export function RatingBreakdown({ progress, steps, className }: { progress: Cour
         segments={[
           { label: 'Автопроверка', value: autoPts, className: 'bg-brand-blue' },
           { label: 'Куратор', value: manualPts, className: 'bg-brand-sky' },
+          { label: 'На проверке', value: pending, className: 'bg-st-review/40' },
         ]}
       />
 
@@ -53,10 +55,17 @@ export function RatingBreakdown({ progress, steps, className }: { progress: Cour
             <span className="num font-bold">{formatScore(row.pts)}</span>
           </li>
         ))}
+        {pending > 0 && (
+          <li className="flex items-center gap-3">
+            <span className="size-3 shrink-0 rounded-[3px] bg-st-review/40" aria-hidden />
+            <span className="flex-1">Ждут проверки куратора — до</span>
+            <span className="num font-bold">{formatScore(pending)}</span>
+          </li>
+        )}
         <li className="flex items-center gap-3 text-brand-ink-2">
           <span className="size-3 shrink-0 rounded-[3px] bg-brand-line" aria-hidden />
           <span className="flex-1">Ещё можно получить</span>
-          <span className="num font-bold">{formatScore(Math.max(0, courseMax - r.total_score - lost(r.breakdown)))}</span>
+          <span className="num font-bold">{formatScore(Math.max(0, courseMax - r.total_score - lost(r.breakdown) - pending))}</span>
         </li>
       </ul>
 

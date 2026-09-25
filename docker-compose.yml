@@ -22,20 +22,29 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=postgresql://stepik:stepik@db:5432/stepikclone
+      - DATABASE_URL=postgresql+psycopg://stepik:stepik@db:5432/stepikclone
+      - SECRET_KEY=${SECRET_KEY:-change-me-in-production}
+      - CORS_ORIGINS=${CORS_ORIGINS:-*}
+      # 1 — залить демо-данные в пустую базу при старте, 0 — не трогать
+      - SEED_DEMO=${SEED_DEMO:-1}
+    volumes:
+      - stepikclone_uploads:/backend/uploads
     depends_on:
       db:
         condition: service_healthy
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      # Vite вшивает адрес API в сборку, поэтому он передаётся на этапе build, а не в environment
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:8000}
     container_name: stepikclone-frontend
     ports:
       - "3000:80"
-    environment:
-      - VITE_API_URL=http://localhost:8000
     depends_on:
       - backend
 
 volumes:
   stepikclone_pgdata:
+  stepikclone_uploads:

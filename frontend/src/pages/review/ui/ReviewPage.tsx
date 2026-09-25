@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { DefaultReviewView, StepTypeBadge, str, typeFromContent } from '@/entities/step'
+import { DefaultReviewView, StepTypeBadge, resolveStepType, str } from '@/entities/step'
 import { submissionApi, submissionTone } from '@/entities/submission'
 import { ReviewForm } from '@/features/review-submission'
 import type { ReviewResult } from '@/shared/api'
@@ -18,11 +18,11 @@ export function ReviewPage() {
   if (error) return <ErrorBox error={error} onRetry={reload} />
   if (!sub) return null
 
-  const type = typeFromContent(sub.step.content, sub.payload)
+  const type = resolveStepType(sub.step.kind, sub.step.type)
   const max = sub.step.max_score
   const pending = sub.status === 'pending' && !result
   const View = type.ReviewView ?? DefaultReviewView
-  const task = str(sub.step.content, 'markdown') || str(sub.step.content, 'question')
+  const task = [str(sub.step.content, 'world') && `**Мир.** ${str(sub.step.content, 'world')}`, str(sub.step.content, 'markdown'), str(sub.step.content, 'question')].filter(Boolean).join('\n\n')
   const criteria = str(sub.step.content, 'criteria')
 
   const goNext = async () => {
@@ -54,7 +54,7 @@ export function ReviewPage() {
             <StatusPill tone={tone} />
             <StepTypeBadge type={type} />
             <span>
-              {sub.student?.full_name ?? 'Ученик'} · работа отправлена {formatDate(sub.created_at)}
+              {sub.student?.full_name ?? 'Ученик'} · {sub.attempt > 1 ? `попытка ${sub.attempt}, ` : ''}отправлено {formatDate(sub.created_at)}
               {pending && <span className="num">, ждёт {waitLabel(sub.created_at)}</span>}
             </span>
           </span>

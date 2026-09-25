@@ -63,6 +63,7 @@ export const theoryStep: StepTypeDef = {
   kind: 'theory',
   label: 'Теория',
   description: 'Текст, картинки, видео по ссылке. Засчитывается при прочтении.',
+  group: 'Основа любого курса',
   icon: 'book',
   check: 'none',
   defaultMaxScore: 0,

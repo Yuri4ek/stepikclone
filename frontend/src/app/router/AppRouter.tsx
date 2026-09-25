@@ -13,6 +13,7 @@ import { LagPage } from '@/pages/lag'
 import { NotFoundPage } from '@/pages/not-found'
 import { ProfilePage } from '@/pages/profile'
 import { ProgressPage } from '@/pages/progress'
+import { QuestionsPage } from '@/pages/questions'
 import { ReviewPage } from '@/pages/review'
 import { QueuePage } from '@/pages/review-queue'
 import { StepPage } from '@/pages/step'
@@ -53,6 +54,7 @@ export function AppRouter() {
             <Route path="curator/queue" element={<QueuePage />} />
             <Route path="curator/review/:submissionId" element={<ReviewPage />} />
             <Route path="curator/lag" element={<LagPage />} />
+            <Route path="curator/questions" element={<QuestionsPage />} />
           </Route>
 
           <Route element={<RequireRole roles={['admin']} />}>

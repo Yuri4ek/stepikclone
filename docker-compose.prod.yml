@@ -1,0 +1,45 @@
+# Продакшен: один домен с HTTPS (Caddy), наружу открыты только 80/443.
+# Запуск: docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env.prod up -d --build
+# Переменные — в .env.prod (пример: .env.prod.example). Подробно — docs/GUIDE.md, раздел «Деплой».
+
+services:
+  db:
+    ports: !reset []
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?задайте POSTGRES_PASSWORD}
+    restart: unless-stopped
+
+  backend:
+    ports: !reset []
+    environment:
+      - DATABASE_URL=postgresql+psycopg://stepik:${POSTGRES_PASSWORD}@db:5432/stepikclone
+      - SECRET_KEY=${SECRET_KEY:?задайте SECRET_KEY}
+      - CORS_ORIGINS=https://${DOMAIN}
+      - SEED_DEMO=${SEED_DEMO:-1}
+    restart: unless-stopped
+
+  frontend:
+    ports: !reset []
+    build:
+      args:
+        VITE_API_URL: https://${DOMAIN}
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: stepikclone-caddy
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - DOMAIN=${DOMAIN:?задайте DOMAIN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+    depends_on:
+      - backend
+      - frontend
+    restart: unless-stopped
+
+volumes:
+  caddy_data:

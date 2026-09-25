@@ -1,7 +1,9 @@
-import { http, type Page, type QueueItem, type ReviewSubmission, type Submission } from '@/shared/api'
+import { http, type Page, type QueueItem, type ReviewSubmission, type Submission, type SubmissionListItem, type SubmissionStatus } from '@/shared/api'
 
 export const submissionApi = {
-  /** Своя работа ученика: статус, баллы, комментарий куратора */
+  /** Все работы ученика: статусы, баллы, комментарии куратора, результаты тестов */
+  mine: (params: { course_id?: string; status?: SubmissionStatus; limit?: number; offset?: number } = {}) => http.get<Page<SubmissionListItem>>('/learning/submissions', params),
+  /** Своя работа ученика */
   get: (id: string) => http.get<Submission>(`/learning/submissions/${id}`),
   /** Очередь ручной проверки (куратор / админ) */
   queue: (params: { course_id?: string; limit?: number; offset?: number }) => http.get<Page<QueueItem>>('/reviews/queue', params),

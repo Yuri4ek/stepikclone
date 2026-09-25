@@ -1,5 +1,6 @@
 import type { CSSProperties } from 'react'
 import { mediaUrl } from '@/shared/api'
+import type { IconName } from '@/shared/ui'
 
 // Обложки по умолчанию — плоские цвета бренда (градиенты на карточках брендбук запрещает)
 const COVERS = ['#3457F0', '#0B1220', '#2641C9', '#131C30']
@@ -20,4 +21,12 @@ export function courseCoverStyle(course: { id: string; cover_url?: string | null
     backgroundSize: 'cover',
     backgroundPosition: 'center',
   }
+}
+
+/** Иконка курса по инструменту из паспорта: Scratch — блоки, Minecraft — куб, Python — код */
+export function courseIcon(course: { title: string; passport?: { tool?: string } | null }): IconName {
+  const t = `${course.passport?.tool ?? ''} ${course.title}`.toLowerCase()
+  if (t.includes('scratch')) return 'blocks'
+  if (t.includes('minecraft')) return 'cube'
+  return 'code'
 }

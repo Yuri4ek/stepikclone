@@ -48,7 +48,7 @@ export function CourseBuilderPage() {
     void mutate(() => structureApi.swapSteps(a, b))
   }
 
-  const stepType = (s: AdminStep) => resolveStepType(s.kind, s.content, s.id)
+  const stepType = (s: AdminStep) => resolveStepType(s.kind, s.type)
 
   return (
     <>

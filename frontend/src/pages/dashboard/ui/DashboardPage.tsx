@@ -4,8 +4,8 @@ import { useUser } from '@/entities/session'
 import { stepApi } from '@/entities/step'
 import { CatalogCourseCard } from '@/widgets/course-card'
 import { NextStepCard } from '@/widgets/next-step'
-import type { CatalogCourse } from '@/shared/api'
-import { formatPercent, useAsync } from '@/shared/lib'
+import type { CatalogCourse, CourseProgress } from '@/shared/api'
+import { formatPercent, plural, useAsync } from '@/shared/lib'
 import { EmptyState, ErrorBox, Icon, Loader, ProgressBar, SectionLabel, StatusPill } from '@/shared/ui'
 
 interface MyCourse {
@@ -13,16 +13,17 @@ interface MyCourse {
   steps: FlatStep[]
   current: FlatStep | null
   returned: { step: FlatStep; feedback: string | null }[]
+  progress: CourseProgress | null
 }
 
 async function loadMyCourse(course: CatalogCourse): Promise<MyCourse> {
-  const [outline, next] = await Promise.all([courseApi.outline(course.id), courseApi.next(course.id).catch(() => null)])
+  const [outline, next, progress] = await Promise.all([courseApi.outline(course.id), courseApi.next(course.id).catch(() => null), courseApi.progress(course.id).catch(() => null)])
   const steps = flattenOutline(sortOutline(outline))
   // Текущий шаг берём у бэкенда (/next), номер и статус — из оглавления
-  const current = next?.current_step ? (steps.find((s) => s.id === next.current_step!.id) ?? null) : (steps.find((s) => s.progress.status !== 'passed') ?? null)
+  const current = next?.current_step ? (steps.find((s) => s.id === next.current_step!.id) ?? null) : null
   const returnedSteps = steps.filter((s) => s.progress.status === 'returned').slice(0, 3)
   const feedback = await Promise.all(returnedSteps.map((s) => stepApi.get(s.id).then((d) => d.progress.feedback).catch(() => null)))
-  return { course, steps, current, returned: returnedSteps.map((step, i) => ({ step, feedback: feedback[i] })) }
+  return { course, steps, current, progress, returned: returnedSteps.map((step, i) => ({ step, feedback: feedback[i] })) }
 }
 
 async function loadDashboard() {
@@ -31,6 +32,8 @@ async function loadDashboard() {
   const mine = await Promise.all(mineRaw.map(loadMyCourse))
   return { mine, others: catalog.items.filter((c) => !c.enrollment) }
 }
+
+const waitingCount = (m: MyCourse) => m.steps.filter((s) => s.progress.status === 'submitted').length
 
 function CourseProgressRow({ m }: { m: MyCourse }) {
   const passed = m.steps.filter((s) => s.progress.status === 'passed').length
@@ -44,9 +47,14 @@ function CourseProgressRow({ m }: { m: MyCourse }) {
       </div>
       <ProgressBar value={m.course.enrollment!.percent} className="mt-3" />
       <div className="mt-2 flex justify-between gap-3 text-sm text-brand-ink-3">
-        <span className="truncate">{m.current ? `Дальше: ${m.current.title}` : 'Курс пройден'}</span>
+        <span className="truncate">{m.current ? `Дальше: ${m.current.title}` : waitingCount(m) ? 'Всё сдано, ждём проверку' : 'Курс пройден'}</span>
         <span className="num shrink-0">{formatPercent(m.course.enrollment!.percent)}</span>
       </div>
+      {m.progress?.rating.place && m.progress.rating.group_size > 1 && (
+        <div className="num mt-1 text-sm text-brand-ink-2">
+          {m.progress.rating.place}-е место из {m.progress.rating.group_size} в группе курса
+        </div>
+      )}
     </Link>
   )
 }
@@ -63,17 +71,26 @@ export function DashboardPage() {
   // Главный курс — первый незавершённый; если все пройдены — первый
   const main = data.mine.find((m) => m.current) ?? data.mine[0]
   const returned = data.mine.flatMap((m) => m.returned.map((r) => ({ ...r, course: m.course })))
+  const streak = data.mine.reduce((a, m) => Math.max(a, m.progress?.streak_days ?? 0), 0)
 
   return (
     <div className="space-y-10">
       <div>
         <h1 className="text-[36px] leading-tight font-extrabold tracking-tight">Привет, {firstName}!</h1>
-        <p className="mt-1 text-brand-ink-2">{main ? 'Вот что делать дальше.' : 'Выбери курс, и начнём с первого шага.'}</p>
+        <p className="mt-1 flex flex-wrap items-center gap-3 text-brand-ink-2">
+          {main ? 'Вот что делать дальше.' : 'Выбери курс, и начнём с первого шага.'}
+          {streak > 1 && (
+            <span className="num inline-flex items-center gap-1.5 rounded-full bg-brand-blue-50 px-3 py-0.5 text-sm font-semibold text-brand-blue">
+              <Icon name="flag" size={16} />
+              {streak} {plural(streak, 'день', 'дня', 'дней')} подряд
+            </span>
+          )}
+        </p>
       </div>
 
       {main ? (
         <div className="grid items-start gap-6 lg:grid-cols-[1.4fr_1fr]">
-          <NextStepCard courseId={main.course.id} courseTitle={main.course.title} step={main.current} total={main.steps.length} />
+          <NextStepCard courseId={main.course.id} courseTitle={main.course.title} step={main.current} total={main.steps.length} waiting={waitingCount(main)} />
           <div className="space-y-4">
             {returned.map((r) => (
               <Link key={r.step.id} to={`/courses/${r.course.id}/steps/${r.step.id}`} className="block rounded-card border border-brand-amber/30 bg-brand-amber-50 p-5 text-brand-night transition-colors hover:border-brand-amber">

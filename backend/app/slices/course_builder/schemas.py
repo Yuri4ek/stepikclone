@@ -1,7 +1,7 @@
 from decimal import Decimal
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, EmailStr, Field
 
 
 class CourseCreate(BaseModel):
@@ -9,12 +9,14 @@ class CourseCreate(BaseModel):
     slug: str = Field(min_length=1, max_length=120)
     description: str = ""
     cover_url: str | None = None
+    passport: dict = Field(default_factory=dict)
 
 
 class CourseUpdate(BaseModel):
     title: str | None = None
     description: str | None = None
     cover_url: str | None = None
+    passport: dict | None = None
 
 
 class CourseOut(BaseModel):
@@ -23,6 +25,7 @@ class CourseOut(BaseModel):
     title: str
     description: str
     cover_url: str | None = None
+    passport: dict = Field(default_factory=dict)
     status: str
 
 
@@ -71,6 +74,7 @@ class StepCreate(BaseModel):
 
 class StepUpdate(BaseModel):
     title: str | None = None
+    kind: str | None = None
     position: int | None = None
     content: dict | None = None
     max_score: Decimal | None = None
@@ -90,3 +94,14 @@ class StepOut(BaseModel):
 
 class CuratorAssign(BaseModel):
     user_id: UUID
+
+
+class StudentAssign(BaseModel):
+    user_id: UUID
+
+
+class UserCreate(BaseModel):
+    email: EmailStr
+    full_name: str = Field(min_length=1, max_length=255)
+    role: str
+    password: str = Field(min_length=6)
